@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GC Luxury Cars</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --bg:#0b0b0c;
+  --surface:#141416;
+  --surface-2:#1c1c1f;
+  --hairline:#2a2a2d;
+  --gold:#c9a24b;
+  --gold-bright:#e8c876;
+  --silver:#b9bec7;
+  --text:#eeece6;
+  --text-dim:#9a9994;
+  --danger:#a33636;
+  --success:#3f7d4a;
+  --font-display:'Fraunces',serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font-body);}
+body{-webkit-font-smoothing:antialiased;}
+a{color:inherit;}
+button{font-family:var(--font-body);cursor:pointer;}
+::selection{background:var(--gold);color:#0b0b0c;}
+
+/* ---------- layout shell ---------- */
+.app{min-height:100vh;display:flex;flex-direction:column;}
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;
+  padding:16px 28px;background:rgba(11,11,12,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--hairline);}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:20px;letter-spacing:.5px;}
+.brand-logo{width:54px;height:54px;object-fit:contain;border-radius:50%;background:#050506;}
+.brand .wing{color:var(--gold);font-size:22px;}
+.brand small{display:block;font-family:var(--font-mono);font-size:9px;letter-spacing:3px;color:var(--gold);font-weight:500;}
+nav.mainnav{display:flex;gap:4px;}
+nav.mainnav button{background:none;border:none;color:var(--text-dim);padding:8px 14px;font-size:13px;letter-spacing:.3px;border-radius:3px;transition:.15s;}
+nav.mainnav button:hover{color:var(--text);}
+nav.mainnav button.active{color:var(--gold-bright);background:var(--surface-2);}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.admin-session{display:flex;align-items:center;gap:10px;padding-left:14px;border-left:1px solid var(--hairline);}
+.admin-identity{display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:11px;letter-spacing:.8px;color:var(--gold-bright);}
+.admin-identity .admin-icon{display:grid;place-items:center;width:25px;height:25px;border:1px solid var(--gold);border-radius:50%;font-size:13px;background:rgba(201,162,75,.12);}
+.admin-session .btn.danger{padding:7px 12px;background:rgba(175,35,35,.18);}
+.plate{font-family:var(--font-mono);font-size:11px;letter-spacing:1px;background:var(--plate,#0e0e0f);border:1px solid var(--hairline);
+  padding:5px 10px;border-radius:3px;color:var(--silver);white-space:nowrap;}
+.btn{border:1px solid var(--hairline);background:var(--surface-2);color:var(--text);padding:9px 16px;border-radius:3px;font-size:13px;font-weight:500;transition:.15s;}
+.btn:hover{border-color:var(--gold);color:var(--gold-bright);}
+.btn.gold{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#161200;border:none;font-weight:600;}
+.btn.gold:hover{filter:brightness(1.08);}
+.btn.ghost{background:transparent;}
+.btn.small{padding:6px 11px;font-size:12px;}
+.btn.danger{border-color:var(--danger);color:#e79b9b;}
+
+main{flex:1;}
+.section{padding:64px 28px;max-width:1240px;margin:0 auto;}
+.section h2{font-family:var(--font-display);font-size:30px;margin:0 0 6px;}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:10px;display:block;}
+
+/* ---------- hero / banner carousel ---------- */
+.hero{position:relative;height:78vh;min-height:520px;overflow:hidden;border-bottom:1px solid var(--hairline);}
+.hero-slide{position:absolute;inset:0;z-index:1;opacity:0;transition:opacity .8s ease;display:flex;align-items:flex-end;
+  background:radial-gradient(ellipse at 30% 20%, rgba(201,162,75,.18), transparent 55%),
+             radial-gradient(ellipse at 80% 80%, rgba(255,255,255,.05), transparent 60%),
+             linear-gradient(180deg, rgba(11,11,12,.88) 0%, rgba(21,21,23,.78) 55%, rgba(11,11,12,.92) 100%);}
+.hero-slide.active{opacity:1;}
+.hero-content{position:relative;z-index:2;padding:0 28px 64px;max-width:1240px;margin:0 auto;width:100%;}
+.hero-content .eyebrow{color:var(--gold-bright);}
+.hero-content h1{font-family:var(--font-display);font-size:56px;line-height:1.05;margin:0 0 14px;max-width:680px;}
+.hero-content p{color:var(--text-dim);max-width:520px;margin:0 0 24px;font-size:15px;}
+.hero-dots{position:absolute;bottom:24px;right:28px;display:flex;gap:8px;}
+.hero-dots span{width:22px;height:3px;background:var(--hairline);cursor:pointer;}
+.hero-dots span.active{background:var(--gold);}
+.hero-cta{display:flex;gap:12px;}
+.hero-showroom{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.25;filter:saturate(.8);pointer-events:none;}
+.showroom-section{max-width:1240px;margin:0 auto;padding:20px 28px 64px;}
+.showroom-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-top:24px;}
+.showroom-photo{width:100%;height:310px;object-fit:cover;object-position:center;background:#0b0b0c;border:1px solid var(--hairline);border-radius:6px;display:block;}
+.showroom-photo.tall{height:420px;object-position:center 45%;}
+.showroom-caption{padding:12px 0 0;color:var(--text-dim);font-size:12px;}
+@media(max-width:760px){.showroom-grid{grid-template-columns:1fr;}.showroom-photo,.showroom-photo.tall{height:260px;}}
+
+/* car silhouette used as decorative motif in hero */
+.silhouette{position:absolute;right:-40px;bottom:-10px;width:52%;max-width:700px;opacity:.9;pointer-events:none;}
+
+/* ---------- catalog ---------- */
+.catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-top:28px;}
+.car-card{background:var(--surface);border:1px solid var(--hairline);border-radius:6px;overflow:hidden;cursor:pointer;transition:.2s;position:relative;}
+.car-card:hover{border-color:var(--gold);transform:translateY(-2px);}
+.car-thumb{height:150px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 120%, rgba(255,255,255,.08), transparent 60%);}
+.car-thumb svg,.car-thumb img{width:88%;height:138px;object-fit:contain;filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));}
+.car-card .body{padding:14px 16px 16px;}
+.car-card .cat{font-family:var(--font-mono);font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;}
+.car-card h3{font-family:var(--font-display);font-size:19px;margin:4px 0 8px;}
+.car-card .spec-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);margin-bottom:10px;}
+.car-card .price{font-family:var(--font-mono);font-size:15px;color:var(--gold-bright);}
+.stock-tag{position:absolute;top:10px;right:10px;z-index:3;font-family:var(--font-mono);font-size:9px;padding:3px 7px;border-radius:2px;letter-spacing:1px;white-space:nowrap;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.45);}
+.stock-tag.in{background:rgba(35,135,55,.72);color:#d5ffda;border:1px solid #67d879;}
+.stock-tag.low{background:rgba(175,35,35,.78);color:#ffe0e0;border:1px solid #ff7777;}
+.stock-tag.out{background:rgba(70,70,75,.9);color:#f0f0f0;border:1px solid #a0a0a8;}
+
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;}
+.filters button{background:var(--surface-2);border:1px solid var(--hairline);color:var(--text-dim);padding:7px 14px;border-radius:20px;font-size:12px;}
+.filters button.active{color:var(--gold-bright);border-color:var(--gold);}
+
+/* ---------- modal ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(3px);z-index:100;display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:40px 16px;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--hairline);border-radius:8px;max-width:920px;width:100%;position:relative;}
+.modal-close{position:absolute;top:14px;right:14px;background:var(--surface-2);border:1px solid var(--hairline);color:var(--text);
+  width:32px;height:32px;border-radius:50%;font-size:16px;line-height:1;z-index:5;}
+.modal.small{max-width:460px;}
+
+/* vehicle detail */
+.vd-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:0;}
+@media(max-width:760px){.vd-grid{grid-template-columns:1fr;}}
+.vd-viewer{background:radial-gradient(ellipse at 50% 70%, rgba(255,255,255,.06), transparent 65%), #0e0e10;
+  padding:30px 20px 20px;display:flex;flex-direction:column;align-items:center;border-radius:8px 0 0 8px;position:relative;}
+.vd-viewer .hint{font-family:var(--font-mono);font-size:10px;color:var(--text-dim);letter-spacing:1.5px;margin-top:10px;}
+.vd-stage{width:100%;height:230px;display:flex;align-items:center;justify-content:center;perspective:900px;touch-action:none;cursor:grab;}
+.vd-stage:active{cursor:grabbing;}
+.vd-car{width:82%;display:flex;align-items:center;justify-content:center;}
+.vd-car svg,.vd-car img{width:92%;height:220px;object-fit:contain;filter:drop-shadow(0 14px 18px rgba(0,0,0,.55));}
+.vd-gallery-controls{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;}
+.vd-gallery-controls button{width:30px;height:30px;padding:0;border-radius:50%;}
+.vd-frame-count{min-width:48px;text-align:center;color:var(--text-dim);font-family:var(--font-mono);font-size:10px;}
+.vd-controls{display:flex;gap:8px;margin-top:14px;}
+.vd-panel{padding:26px 26px 26px;}
+.vd-panel .eyebrow{margin-bottom:4px;}
+.vd-panel h2{font-family:var(--font-display);font-size:26px;margin:0 0 6px;}
+.vd-panel .tagline{color:var(--text-dim);font-size:13px;margin-bottom:14px;font-style:italic;}
+.vd-panel .price-big{font-family:var(--font-mono);color:var(--gold-bright);font-size:22px;margin-bottom:16px;}
+.spec-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:16px;font-size:12.5px;}
+.spec-grid div span{display:block;color:var(--text-dim);font-family:var(--font-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;}
+.vd-desc{font-size:13.5px;line-height:1.6;color:#d9d7d0;margin-bottom:16px;}
+.optlist{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;}
+.optlist span{font-family:var(--font-mono);font-size:10.5px;border:1px solid var(--hairline);padding:4px 8px;border-radius:3px;color:var(--silver);}
+.vd-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.vd-actions button{padding:12px;}
+
+/* forms */
+.form-row{margin-bottom:14px;}
+.form-row label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:6px;font-family:var(--font-mono);letter-spacing:.5px;}
+.form-row input,.form-row select{width:100%;background:var(--surface-2);border:1px solid var(--hairline);color:var(--text);
+  padding:10px 12px;border-radius:4px;font-size:14px;font-family:var(--font-body);}
+.form-row input[type="file"]{padding:8px;}
+.form-row textarea{width:100%;min-height:120px;resize:vertical;background:var(--surface-2);border:1px solid var(--hairline);color:var(--text);
+  padding:10px 12px;border-radius:4px;font-size:14px;font-family:var(--font-body);line-height:1.5;}
+.form-row input:focus,.form-row select:focus{outline:none;border-color:var(--gold);}
+.form-row textarea:focus{outline:none;border-color:var(--gold);}
+.form-grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
+.panel-title{font-family:var(--font-display);font-size:22px;margin:0 0 4px;}
+.panel-sub{color:var(--text-dim);font-size:13px;margin-bottom:22px;}
+.result-box{background:var(--surface-2);border:1px solid var(--hairline);border-radius:6px;padding:16px;margin-top:16px;}
+.result-line{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px dashed var(--hairline);}
+.result-line:last-child{border-bottom:none;}
+.result-line b{color:var(--gold-bright);font-family:var(--font-mono);}
+.note{font-size:11.5px;color:var(--text-dim);margin-top:12px;line-height:1.5;border-left:2px solid var(--gold);padding-left:10px;}
+
+/* tabs */
+.tabbar{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--hairline);}
+.tabbar button{background:none;border:none;color:var(--text-dim);padding:10px 16px;font-size:13px;border-bottom:2px solid transparent;}
+.tabbar button.active{color:var(--gold-bright);border-color:var(--gold);}
+
+/* admin table */
+table.admin{width:100%;border-collapse:collapse;font-size:13px;}
+table.admin th{text-align:left;font-family:var(--font-mono);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);
+  padding:10px 8px;border-bottom:1px solid var(--hairline);}
+table.admin td{padding:8px;border-bottom:1px solid var(--hairline);}
+table.admin input{background:var(--surface-2);border:1px solid var(--hairline);color:var(--text);padding:5px 8px;border-radius:3px;width:100%;font-size:12.5px;}
+.bars{display:flex;align-items:flex-end;gap:10px;height:140px;margin-top:10px;}
+.bar{flex:1;background:linear-gradient(180deg,var(--gold-bright),var(--gold));border-radius:3px 3px 0 0;position:relative;}
+.bar span{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-size:10px;color:var(--text-dim);font-family:var(--font-mono);}
+
+/* toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface-2);
+  border:1px solid var(--gold);color:var(--text);padding:12px 20px;border-radius:6px;font-size:13px;z-index:200;opacity:0;transition:.25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+footer{border-top:1px solid var(--hairline);padding:28px;text-align:center;color:var(--text-dim);font-size:12px;}
+.badge-login{font-family:var(--font-mono);font-size:11px;color:var(--gold-bright);}
+
+@media(max-width:900px){
+  .topbar{flex-wrap:wrap;gap:12px;padding:14px 20px;}
+  nav.mainnav{order:3;width:100%;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin;}
+  nav.mainnav button{flex:0 0 auto;white-space:nowrap;}
+  .topbar-right{margin-left:auto;}
+  .hero-content h1{font-size:44px;max-width:600px;}
+  .section{padding:48px 20px;}
+  .showroom-section{padding:20px 20px 48px;}
+  table.admin{display:block;overflow-x:auto;white-space:nowrap;}
+}
+
+@media(max-width:600px){
+  .topbar{padding:12px 14px;}
+  .brand{font-size:16px;gap:7px;}
+  .brand-logo{width:46px;height:46px;}
+  .brand small{font-size:7px;letter-spacing:2px;}
+  .topbar-right{width:100%;margin-left:0;justify-content:flex-end;}
+  .admin-session{margin-left:auto;padding-left:10px;gap:7px;}
+  .admin-identity{font-size:9px;letter-spacing:.4px;}
+  nav.mainnav{gap:0;}
+  nav.mainnav button{padding:8px 10px;font-size:12px;}
+  .hero{height:620px;min-height:0;}
+  .hero-content{padding:0 20px 58px;}
+  .hero-content h1{font-size:34px;line-height:1.08;}
+  .hero-content p{font-size:13px;line-height:1.5;}
+  .hero-cta{flex-wrap:wrap;gap:8px;}
+  .hero-cta .btn{flex:1 1 150px;}
+  .hero-dots{right:20px;bottom:22px;}
+  .section,.showroom-section{padding-left:14px;padding-right:14px;}
+  .section h2{font-size:26px;}
+  .catalog-grid{grid-template-columns:1fr;gap:14px;}
+  .car-thumb{height:175px;}
+  .car-thumb svg,.car-thumb img{width:88%;height:150px;}
+  .form-grid2{grid-template-columns:1fr;}
+  .modal-overlay{padding:14px 8px;}
+  .modal{border-radius:6px;}
+  .modal-close{top:10px;right:10px;}
+  .vd-viewer{padding:24px 12px 18px;border-radius:6px 6px 0 0;}
+  .vd-panel{padding:22px 16px;}
+  .vd-actions{grid-template-columns:1fr;}
+  .vd-stage{height:210px;}
+  .vd-car svg,.vd-car img{height:190px;}
+  .result-line{gap:12px;align-items:center;}
+  footer{padding:22px 14px;font-size:11px;line-height:1.5;}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   DADOS DO CATÁLOGO (extraídos do guia comercial GC Luxury Cars)
+   Preços são estimativas para fins de demonstração.
+   ============================================================ */
+const CAR_DATA = [
+  {id:1, brand:"BMW", model:"Série 7", year:2024, category:"Sedã de Luxo", color:"#1c1e22", images:["bmwserie7_1.jpeg.jpeg","bmwserie7_2.jpeg","bmwserie7_3.jpeg"],
+   price:1250000, engineType:"i6", stock:2,
+   engine:"3.0 I6 Turbo + Híbrido", power:"381 cv", accel:"5,2s (0-100)", topSpeed:"250 km/h", consumption:"9,8 km/l",
+   tagline:"O luxo para quem não precisa provar nada.",
+   desc:"Sedã de luxo com conforto, tecnologia, espaço e presença. Isolamento acústico, bancos e tecnologia criam uma experiência de categoria superior — ideal para uso diário ou transporte de passageiros importantes.",
+   idealFor:"Empresário, executivo ou colecionador que busca sofisticação de uso frequente.",
+   sellingPoint:"Luxo sem abrir mão de tecnologia e desempenho.",
+   optionals:["Bancos de couro Merino","Head-up Display","Suspensão adaptativa","Teto panorâmico","Assistente de condução"]},
+  {id:2, brand:"McLaren", model:"720S", year:2024, category:"Supercarro", color:"#e8891c", images:["mclaren720s_1.jpeg","mclaren720s_2.jpeg","mclaren720s_3.jpeg"],
+   price:3890000, engineType:"v8", stock:1,
+   engine:"V8 4.0 Biturbo", power:"720 PS / 770 Nm", accel:"2,9s (0-100)", topSpeed:"341 km/h", consumption:"5,1 km/l",
+   tagline:"Não é apenas rápido. É uma máquina construída em torno da velocidade.",
+   desc:"Estrutura leve de fibra de carbono, aerodinâmica e suspensão sofisticada. Portas diédricas reforçam a presença do carro; o interior mantém o motorista no centro da experiência.",
+   idealFor:"Cliente que quer um supercarro com comportamento de carro de pista.",
+   sellingPoint:"720 PS em uma estrutura extremamente leve de fibra de carbono.",
+   optionals:["Portas diédricas","Chassi MonoCage II","Freios de carbono-cerâmica","Modo Track","Bancos em fibra de carbono"]},
+  {id:3, brand:"Lamborghini", model:"Aventador", year:2023, category:"Supercarro", color:"#5c6b3a", images:["lamborghiniaventadorsvj_1.jpeg","lamborghiniaventadorsvj_2.jpeg"],
+   price:4750000, engineType:"v12", stock:1,
+   engine:"V12 6.5 Aspirado", power:"769 cv", accel:"2,9s (0-100)", topSpeed:"350 km/h", consumption:"4,2 km/l",
+   tagline:"O V12 que você compra também com os ouvidos.",
+   desc:"Design extremamente agressivo e sonoridade visceral. Portas de abertura vertical e presença marcante fazem do Aventador um carro que chama atenção mesmo parado — uma compra fortemente emocional.",
+   idealFor:"Colecionador e apaixonado por Lamborghini que busca impacto visual e emocional.",
+   sellingPoint:"Um dos grandes Lamborghini V12 de sua geração.",
+   optionals:["Portas verticais","Tração integral","Escape esportivo","Bancos alcantara","Modo Corsa"]},
+  {id:4, brand:"Ferrari", model:"296 GTB", year:2024, category:"Supercarro Híbrido", color:"#a3231f", images:["ferrari296gtb_1.jpeg","ferrari296gtb_2.jpeg"],
+   price:4200000, engineType:"v6t", stock:1,
+   engine:"V6 3.0 Biturbo + Elétrico", power:"830 cv combinados", accel:"2,9s (0-100)", topSpeed:"330 km/h", consumption:"—",
+   tagline:"Tecnologia híbrida sem perder a alma de uma Ferrari.",
+   desc:"Combina um V6 biturbo de 663 cv com motor elétrico. Autonomia elétrica de até 25 km em modo exclusivamente elétrico. Desempenho de supercarro com tecnologia de ponta e o prestígio Ferrari.",
+   idealFor:"Cliente que quer uma Ferrari moderna, tecnológica e extremamente rápida.",
+   sellingPoint:"830 cv combinados vindos de um V6 híbrido.",
+   optionals:["Modo eFuture (100% elétrico)","Freios carbono-cerâmica","Bancos Racing","Manettino de 5 posições"]},
+  {id:5, brand:"Porsche", model:"911 Carrera GTS", year:2024, category:"Esportivo", color:"#8a8f96", images:["porche911carreragts_1.jpeg","porche911carreragts_2.jpeg"],
+   price:1680000, engineType:"flat6", stock:3,
+   engine:"Boxer 3.6 T-Hybrid", power:"541 cv combinados", accel:"3,0s (0-100)", topSpeed:"312 km/h", consumption:"8,9 km/l",
+   tagline:"O esportivo que consegue ser seu carro de todos os dias.",
+   desc:"Sistema T-Hybrid com motor boxer e potência combinada de 541 cv. Pode ser usado durante a semana, em viagens, e ao mesmo tempo entregar uma experiência emocionante em estradas sinuosas ou circuito.",
+   idealFor:"Cliente que quer um esportivo para usar de verdade.",
+   sellingPoint:"Excelente equilíbrio entre performance e utilização cotidiana.",
+   optionals:["PASM suspensão adaptativa","Escape esportivo","Bancos GTS em couro/Race-Tex","Chassi rebaixado"]},
+  {id:6, brand:"Porsche", model:"Taycan Turbo S", year:2024, category:"Elétrico", color:"#b7c4d1", images:["porschetaycanturbos_1.jpeg","porschetaycanturbos_2.jpeg","porschetaycanturbos_3.jpeg"],
+   price:1590000, engineType:"electric", stock:2,
+   engine:"Motores elétricos duplos", power:"761 cv (overboost)", accel:"2,8s (0-100)", topSpeed:"260 km/h", consumption:"—",
+   tagline:"Um elétrico que não se comporta como um carro elétrico comum.",
+   desc:"Resposta instantânea ao acelerador combinada com posição de dirigir, acabamento e comportamento dinâmico característicos da Porsche. Na compra usada, avaliar bateria, carregamento e histórico de atualizações.",
+   idealFor:"Cliente que quer performance elevada com tecnologia elétrica.",
+   sellingPoint:"Desempenho de Porsche com propulsão totalmente elétrica.",
+   optionals:["Carregamento 270 kW","Suspensão pneumática adaptativa","Porsche Active Aerodynamics","Bancos aquecidos/ventilados"]},
+  {id:7, brand:"Audi", model:"RS e-tron GT", year:2024, category:"Elétrico", color:"#2b2f36", images:["audirsetrongt_1.jpeg","audirsetrongt_2.jpeg","audirsetrongt_3.jpeg"],
+   price:1450000, engineType:"electric", stock:2,
+   engine:"Motores elétricos duplos", power:"646 cv (com boost)", accel:"3,3s (0-100)", topSpeed:"250 km/h", consumption:"—",
+   tagline:"O grand tourer elétrico para quem quer viajar rápido e com conforto.",
+   desc:"Combina desempenho elétrico com proposta de grand tourer sofisticado — 598 cv, chegando a 646 cv com boost, 830 Nm. Alto desempenho sem a aparência extrema de um supercarro tradicional.",
+   idealFor:"Executivo ou empresário que quer alto desempenho e utilização frequente.",
+   sellingPoint:"Luxo executivo combinado com desempenho elétrico.",
+   optionals:["Tração quattro","Ar-condicionado de 4 zonas","Faróis Matrix LED","Carregamento 270kW"]},
+  {id:8, brand:"BMW", model:"M4 Competition", year:2024, category:"Esportivo", color:"#2f6b46", images:["bm4m4comp_1.jpeg","bm4m4comp_2.jpeg"],
+   price:890000, engineType:"i6t", stock:3,
+   engine:"I6 3.0 Biturbo", power:"510 cv / 650 Nm", accel:"3,9s (0-100)", topSpeed:"302 km/h", consumption:"7,4 km/l",
+   tagline:"Performance sem transformar cada viagem em um evento.",
+   desc:"Experiência esportiva forte mantendo praticidade. 510 cv, 0-100 em 3,9s. Para quem quer dirigir todos os dias, mas ter um desempenho muito mais agressivo quando decide explorar o veículo.",
+   idealFor:"Cliente que quer um carro esportivo rápido, mas ainda precisa de praticidade.",
+   sellingPoint:"510 cv em um carro que ainda consegue fazer parte da rotina.",
+   optionals:["Diferencial M ativo","Freios M Carbono-cerâmicos","Bancos M Carbon","Modo Drift"]},
+  {id:9, brand:"Mercedes-AMG", model:"GT 63", year:2024, category:"Grand Tourer", color:"#7d8085", images:["mercedesbensgt63_1.jpeg","mercedesbensgt63_2.jpeg"],
+   price:1780000, engineType:"v8", stock:2,
+   engine:"V8 4.0 Biturbo", power:"585 cv", accel:"3,2s (0-100)", topSpeed:"315 km/h", consumption:"6,8 km/l",
+   tagline:"Luxo executivo com comportamento de superesportivo.",
+   desc:"Combina luxo, presença e desempenho elevado. Grande coupé esportivo com interior sofisticado, utilizável tanto em ocasiões formais quanto em condução mais esportiva.",
+   idealFor:"Cliente que quer um carro de alto desempenho para utilizar frequentemente.",
+   sellingPoint:"Combinação de desempenho extremo com luxo Mercedes-AMG.",
+   optionals:["Tração AMG Performance 4MATIC+","Bancos AMG Performance","Suspensão a ar AMG Ride Control+"]},
+  {id:10, brand:"McLaren", model:"Artura", year:2024, category:"Supercarro Híbrido", color:"#8fbf3f", images:["mclarenartura_1.jpeg","mclarenartura_2.jpeg"],
+   price:3450000, engineType:"v6t", stock:1,
+   engine:"V6 Biturbo + Híbrido", power:"680 cv combinados", accel:"3,0s (0-100)", topSpeed:"330 km/h", consumption:"—",
+   tagline:"A nova geração dos supercarros híbridos.",
+   desc:"Combina motor V6 biturbo com tecnologia híbrida mantendo a filosofia de leveza da marca. Eletrificação melhora a resposta do conjunto sem abandonar o foco na experiência de condução.",
+   idealFor:"Comprador que quer exclusividade e tecnologia em um supercarro moderno.",
+   sellingPoint:"Supercarro híbrido seguindo a filosofia de baixo peso da McLaren.",
+   optionals:["Modo 100% elétrico","Chassi MCLA em fibra de carbono","Freios carbono-cerâmicos"]},
+  {id:11, brand:"Lamborghini", model:"Huracán STO", year:2023, category:"Supercarro", color:"#4f9cd6", images:["lamborghinihuracanstoa_1.jpeg","lamborghinihuracanstoa_2.jpeg"],
+   price:5200000, engineType:"v10", stock:1,
+   engine:"V10 5.2 Aspirado", power:"640 cv", accel:"3,0s (0-100)", topSpeed:"310 km/h", consumption:"4,5 km/l",
+   tagline:"Um carro de corrida que recebeu autorização para andar na rua.",
+   desc:"Super Trofeo Omologata — a proposta mais focada em pista da coleção. Soluções aerodinâmicas e elementos desenvolvidos para desempenho, acompanhados pelo motor V10 aspirado. Compra muito mais emocional do que racional.",
+   idealFor:"Cliente que quer o máximo de emoção possível em um Lamborghini.",
+   sellingPoint:"Uma das opções da coleção mais claramente direcionadas à experiência de competição.",
+   optionals:["Capô em fibra de carbono","Aerodinâmica ativa","Rollbar homologado","Bancos em Alcantara"]},
+  {id:12, brand:"Ferrari", model:"SF90 Stradale", year:2024, category:"Supercarro Híbrido", color:"#c21414", images:["ferrarisf90stradale_1.jpeg","ferrarisf90stradale_2.jpeg"],
+   price:6800000, engineType:"v8t", stock:1,
+   engine:"V8 4.0 Turbo + 3 motores elétricos", power:"1.000 cv combinados", accel:"2,5s (0-100)", topSpeed:"340 km/h", consumption:"—",
+   tagline:"O carro que mudou o conceito de Ferrari de produção.",
+   desc:"V8 4.0 turbo de 780 cv com três motores elétricos, tração integral, 1.000 cv combinados. 0-100 em 2,5s e 0-200 em 6,7s. Representa uma mudança tecnológica importante na história da marca.",
+   idealFor:"Colecionador e cliente que quer tecnologia de ponta combinada ao prestígio Ferrari.",
+   sellingPoint:"1.000 cv e tecnologia híbrida derivada da experiência da Ferrari no automobilismo.",
+   optionals:["Tração integral eATS","Modo Qualify","Freios carbono-cerâmicos","Aerodinâmica ativa (Shut-off Gurney)"]},
+];
+
+// cópia mutável usada pelo painel do administrador
+const STORAGE_KEYS = {cars:'gcLuxuryCars.cars', admins:'gcLuxuryCars.admins'};
+function loadStored(key, fallback){
+  try{return JSON.parse(localStorage.getItem(key)) || fallback;}catch(error){return fallback;}
+}
+function persistData(){
+  try{
+    localStorage.setItem(STORAGE_KEYS.cars, JSON.stringify(ADMIN_CARS));
+    localStorage.setItem(STORAGE_KEYS.admins, JSON.stringify(ADMIN_ACCOUNTS));
+  }catch(error){ toast('Não foi possível salvar no navegador.'); }
+}
+let ADMIN_CARS = loadStored(STORAGE_KEYS.cars, JSON.parse(JSON.stringify(CAR_DATA)));
+let CATALOG = ADMIN_CARS;
+
+let state = {
+  user: null,
+  isAdmin: false,
+  currentCar: null,
+  currentTab: 'home',
+  heroIndex: 0,
+  catalogFilter: 'Todos',
+  paymentAmount: null,
+  paymentMode: 'vehicle',
+  apiUserId: null,
+  apiToken: null,
+};
+
+// Credencial do administrador principal. Em produção, isso ficaria no backend.
+const ADMIN_PASSWORD = 'GC.ADMIN';
+let ADMIN_ACCOUNTS = loadStored(STORAGE_KEYS.admins, [{email:'gcadmin@gmail.com', password:ADMIN_PASSWORD, name:'GCADMIN'}]);
+const PIX_KEY = '+5549999625713';
+const API_BASE = location.protocol === 'file:' ? 'http://localhost:3000/api' : '/api';
+function apiHeaders(json = false){ return {...(json ? {'Content-Type':'application/json'} : {}), ...(state.apiToken ? {Authorization:`Bearer ${state.apiToken}`} : {})}; }
+
+/* ============================================================
+   ÁUDIO DO MOTOR — síntese em tempo real via Web Audio API
+   (não são gravações reais dos veículos, e sim uma simulação
+   sonora baseada no tipo de motor de cada carro)
+   ============================================================ */
+let audioCtx = null;
+function getAudioCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function playEngineSound(engineType){
+  const ctx = getAudioCtx();
+  if(ctx.state === 'suspended') ctx.resume();
+  const now = ctx.currentTime;
+  const master = ctx.createGain();
+  master.gain.value = 0.0001;
+  master.connect(ctx.destination);
+  master.gain.exponentialRampToValueAtTime(0.5, now+0.08);
+
+  const profiles = {
+    v12:  {base:70, harmonics:[1,2,3,4,5], rev:1900, dur:2.6, growl:.35},
+    v10:  {base:80, harmonics:[1,2,3,4], rev:2000, dur:2.4, growl:.3},
+    v8:   {base:55, harmonics:[1,2,2.5,4], rev:1500, dur:2.2, growl:.5},
+    v8t:  {base:50, harmonics:[1,2,3], rev:1500, dur:2.2, growl:.4, turbo:true},
+    v6t:  {base:60, harmonics:[1,2,3], rev:1600, dur:2.0, growl:.35, turbo:true},
+    i6t:  {base:65, harmonics:[1,2,3], rev:1550, dur:2.0, growl:.3, turbo:true},
+    i6:   {base:60, harmonics:[1,2], rev:900, dur:1.6, growl:.15},
+    flat6:{base:75, harmonics:[1,2,3,4], rev:1700, dur:2.1, growl:.4},
+    electric:{base:220, harmonics:[1,1.5,2], rev:1400, dur:1.8, growl:0, whine:true},
+  };
+  const p = profiles[engineType] || profiles.v8;
+
+  p.harmonics.forEach((h,i)=>{
+    const osc = ctx.createOscillator();
+    osc.type = p.whine ? 'sine' : (i===0?'sawtooth':'square');
+    const g = ctx.createGain();
+    g.gain.value = 1/(i+1.6);
+    osc.connect(g); g.connect(master);
+    const startFreq = p.base*h;
+    const endFreq = p.rev*h*(p.whine?1.6:1);
+    osc.frequency.setValueAtTime(startFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, now+p.dur*0.55);
+    osc.frequency.exponentialRampToValueAtTime(startFreq*1.2, now+p.dur);
+    osc.start(now); osc.stop(now+p.dur+0.05);
+  });
+
+  if(p.growl>0){
+    const noise = ctx.createBufferSource();
+    const buf = ctx.createBuffer(1, ctx.sampleRate*p.dur, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * p.growl;
+    noise.buffer = buf;
+    const filt = ctx.createBiquadFilter();
+    filt.type='bandpass'; filt.frequency.value = p.base*3;
+    noise.connect(filt); filt.connect(master);
+    noise.start(now); noise.stop(now+p.dur);
+  }
+  master.gain.exponentialRampToValueAtTime(0.0001, now+p.dur+0.1);
+}
+
+/* ============================================================
+   RENDER HELPERS
+   ============================================================ */
+function fmtBRL(v){ return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}); }
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+function carSVG(color){
+  return `<svg viewBox="0 0 240 100" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="120" cy="88" rx="105" ry="7" fill="black" opacity="0.35"/>
+    <path d="M15 68 Q20 40 55 34 Q75 15 120 15 Q160 15 178 34 Q210 38 222 60 Q225 70 218 75 L15 75 Q10 72 15 68Z" fill="${color}" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+    <path d="M70 34 Q85 22 118 22 Q148 22 165 34 L155 34 Q140 27 118 27 Q95 27 80 34Z" fill="rgba(180,220,255,.35)"/>
+    <circle cx="58" cy="76" r="16" fill="#111"/><circle cx="58" cy="76" r="7" fill="#888"/>
+    <circle cx="182" cy="76" r="16" fill="#111"/><circle cx="182" cy="76" r="7" fill="#888"/>
+    <rect x="205" y="52" width="10" height="6" rx="2" fill="#fff" opacity=".85"/>
+    <rect x="18" y="54" width="8" height="5" rx="2" fill="#c0392b" opacity=".85"/>
+  </svg>`;
+}
+
+function carVisual(c, className=''){
+  if(c.images && c.images.length){
+    return `<img class="${className}" src="${c.images[0]}" alt="${c.brand} ${c.model}" data-frame="0">`;
+  }
+  return carSVG(c.color);
+}
+
+async function syncCatalogFromApi(){
+  if(!API_BASE) return;
+  try{
+    const response = await fetch(`${API_BASE}/cars`);
+    if(!response.ok) return;
+    const cars = await response.json();
+    if(!cars.length) return;
+    CATALOG = cars.map(car => {
+      const localCar = CAR_DATA.find(item => item.id === car.id) || {};
+      return {...localCar, ...car, desc:car.description || localCar.desc || '', engineType:car.engine_type || localCar.engineType || 'v8', accel:car.acceleration !== '—' ? car.acceleration : (localCar.accel || '—'), topSpeed:car.top_speed !== '—' ? car.top_speed : (localCar.topSpeed || '—'), images:car.images.length ? car.images : (localCar.images || [])};
+    });
+    ADMIN_CARS = CATALOG;
+    render();
+  }catch(error){ /* Mantém o catálogo local quando a API estiver indisponível. */ }
+}
+
+const NAV_ITEMS = [
+  ['home','Início'], ['catalog','Catálogo'], ['financing','Financiamento'],
+  ['tradein','Troca (FIPE)'], ['testdrive','Test Drive']
+];
+
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    ${topbarHTML()}
+    <main>${viewHTML()}</main>
+    ${footerHTML()}
+    ${modalHTML()}
+  `;
+  attachGlobalHandlers();
+  if(state.currentTab==='home') startHeroRotation();
+  if(state.currentTab==='account') setTimeout(loadAccountActivity, 0);
+  if(state.currentTab==='admin') setTimeout(loadAdminRecords, 0);
+  if(state.currentTab==='admin') setTimeout(loadAdminSummary, 0);
+}
+
+function topbarHTML(){
+  return `
+  <div class="topbar">
+    <div class="brand" onclick="setTab('home')" style="cursor:pointer">
+      <img class="brand-logo" src="logo.jpeg.png" alt="GC Luxury Cars">
+      <div>GC <span style="color:var(--gold)">LUXURY</span> CARS<br><small>SHOWROOM DIGITAL</small></div>
+    </div>
+    <nav class="mainnav">
+      ${NAV_ITEMS.map(([id,label])=>`<button class="${state.currentTab===id?'active':''}" onclick="setTab('${id}')">${label}</button>`).join('')}
+      ${state.isAdmin ? `<button class="${state.currentTab==='admin'?'active':''}" onclick="setTab('admin')">Painel Admin</button>` : ''}
+    </nav>
+    <div class="topbar-right">
+      ${state.isAdmin
+        ? `<div class="admin-session"><span class="admin-identity"><span class="admin-icon">♛</span><span>ADMIN · ${state.user ? state.user.name.toUpperCase() : 'GCADMIN'}</span></span><button class="btn small danger" onclick="logoutAdmin()">Sair</button></div>`
+        : state.user
+          ? `<button class="btn small" onclick="setTab('account')">Minha conta</button><span class="plate badge-login">🔓 ${state.user.name.toUpperCase()}</span><button class="btn small" onclick="logout()">Sair</button>`
+          : `<button class="btn small" onclick="openModal('login')">Entrar</button><button class="btn small gold" onclick="openModal('signup')">Cadastrar</button>`}
+    </div>
+  </div>`;
+}
+
+function footerHTML(){
+  return `<footer>GC Luxury Cars — Protótipo funcional de demonstração · Monte-Carlo · São Paulo<br>
+  Dados de veículos extraídos do guia comercial interno. Preços exibidos são estimativas para fins de demonstração.<br>
+  <a href="#" onclick="event.preventDefault();openModal('adminlogin')" style="color:var(--text-dim);font-size:11px">Acesso administrativo</a></footer>`;
+}
+
+/* ---------------- VIEWS ---------------- */
+function viewHTML(){
+  switch(state.currentTab){
+    case 'home': return homeView();
+    case 'catalog': return catalogView();
+    case 'financing': return financingView();
+    case 'tradein': return tradeinView();
+    case 'testdrive': return testdriveView();
+    case 'admin': return state.isAdmin ? adminView() : homeView();
+    case 'account': return state.user && !state.isAdmin ? accountView() : homeView();
+    default: return homeView();
+  }
+}
+
+const HERO_SLIDES = [
+  {eyebrow:'Promoção da semana', title:'Até R$ 80.000 em bônus na troca do seu veículo atual', text:'Use o valor da tabela FIPE do seu carro como entrada e leve um modelo da coleção GC Luxury Cars.', cta:'Simular troca', tab:'tradein'},
+  {eyebrow:'Financiamento facilitado', title:'Parcelas que cabem no seu bolso, sem abrir mão do sonho', text:'Simule agora mesmo o financiamento de qualquer veículo do nosso showroom em poucos segundos.', cta:'Simular financiamento', tab:'financing'},
+  {eyebrow:'Experimente antes de decidir', title:'Agende seu test drive com confirmação automática', text:'Escolha o veículo, a data e o horário. Você recebe a confirmação por e-mail em instantes.', cta:'Agendar test drive', tab:'testdrive'},
+];
+function homeView(){
+  return `
+  <div class="hero">
+    <img class="hero-showroom" src="loja.jpeg.png" alt="Interior da loja GC Luxury Cars">
+    ${HERO_SLIDES.map((s,i)=>`
+      <div class="hero-slide ${i===0?'active':''}" data-slide="${i}">
+        <div class="silhouette">${carSVG(i%2===0?'#c9a24b':'#3a3a3d')}</div>
+        <div class="hero-content">
+          <span class="eyebrow">${s.eyebrow}</span>
+          <h1>${s.title}</h1>
+          <p>${s.text}</p>
+          <div class="hero-cta">
+            <button class="btn gold" onclick="setTab('${s.tab}')">${s.cta}</button>
+            <button class="btn ghost" onclick="setTab('catalog')">Ver catálogo</button>
+          </div>
+        </div>
+      </div>`).join('')}
+    <div class="hero-dots">${HERO_SLIDES.map((_,i)=>`<span class="${i===0?'active':''}" data-dot="${i}" onclick="setHero(${i})"></span>`).join('')}</div>
+  </div>
+  <div class="section">
+    <span class="eyebrow">Coleção em destaque</span>
+    <h2>12 veículos selecionados no showroom</h2>
+    <div class="catalog-grid">${CATALOG.slice(0,4).map(carCardHTML).join('')}</div>
+    <div style="margin-top:24px;text-align:center"><button class="btn gold" onclick="setTab('catalog')">Ver catálogo completo</button></div>
+  </div>
+  <section class="showroom-section">
+    <span class="eyebrow">GC Luxury Cars</span>
+    <h2>Conheça nosso showroom</h2>
+    <div class="showroom-grid">
+      <div>
+        <img class="showroom-photo tall" src="foradaloja.jpeg.png" alt="Fachada da loja GC Luxury Cars">
+        <div class="showroom-caption">Uma experiência premium começa antes mesmo de entrar.</div>
+      </div>
+      <div>
+        <img class="showroom-photo" src="dentrodaloja.jpeg.png" alt="Veículos dentro da loja GC Luxury Cars">
+        <div class="showroom-caption">Veículos selecionados em um ambiente pensado para receber você.</div>
+      </div>
+    </div>
+  </section>`;
+}
+
+function carCardHTML(c){
+  const stockClass = c.stock<=0 ? 'out' : c.stock===1 ? 'low' : 'in';
+  const stockLabel = c.stock<=0 ? 'SEM ESTOQUE' : c.stock===1 ? 'ÚLTIMA UNIDADE' : c.stock+' EM ESTOQUE';
+  return `
+  <div class="car-card" onclick="openVehicle(${c.id})">
+    <span class="stock-tag ${stockClass}">${stockLabel}</span>
+    <div class="car-thumb">${carVisual(c)}</div>
+    <div class="body">
+      <div class="cat">${c.category}</div>
+      <h3>${c.brand} ${c.model}</h3>
+      <div class="spec-row"><span>${c.power}</span><span>${c.accel}</span></div>
+      <div class="price">${fmtBRL(c.price)}</div>
+    </div>
+  </div>`;
+}
+
+function catalogView(){
+  const cats = ['Todos', ...new Set(CATALOG.map(c=>c.category))];
+  const filtered = state.catalogFilter==='Todos'?CATALOG:CATALOG.filter(c=>c.category===state.catalogFilter);
+  return `
+  <div class="section">
+    <span class="eyebrow">Showroom</span>
+    <h2>Catálogo completo</h2>
+    <div class="filters">${cats.map(cat=>`<button class="${state.catalogFilter===cat?'active':''}" onclick="setFilter('${cat}')">${cat}</button>`).join('')}</div>
+    <div class="catalog-grid">${filtered.map(carCardHTML).join('')}</div>
+  </div>`;
+}
+
+function financingView(){
+  return `
+  <div class="section" style="max-width:640px">
+    <span class="eyebrow">Simulação</span>
+    <h2>Simulador de financiamento</h2>
+    <p class="panel-sub">Calcule uma estimativa de parcelas mensais para qualquer veículo da coleção.</p>
+    <div class="form-row"><label>Veículo</label>
+      <select id="fin-car">${CATALOG.map(c=>`<option value="${c.id}">${c.brand} ${c.model} — ${fmtBRL(c.price)}</option>`).join('')}</select>
+    </div>
+    <div class="form-grid2">
+      <div class="form-row"><label>Entrada (R$)</label><input id="fin-down" type="number" value="200000" min="0"></div>
+      <div class="form-row"><label>Prazo (meses)</label><input id="fin-term" type="number" value="48" min="6" max="72"></div>
+    </div>
+    <div class="form-row"><label>Taxa de juros ao mês (%)</label><input id="fin-rate" type="number" value="1.39" step="0.01"></div>
+    <button class="btn gold" onclick="calcFinancing()">Calcular parcelas</button>
+    <div id="fin-result"></div>
+    <div class="note">Simulação para fins ilustrativos. A aprovação final e a taxa efetiva dependem de análise de crédito junto à instituição financeira parceira.</div>
+  </div>`;
+}
+
+function tradeinView(){
+  return `
+  <div class="section" style="max-width:640px">
+    <span class="eyebrow">Troca com referência FIPE</span>
+    <h2>Simule a troca do seu veículo</h2>
+    <p class="panel-sub">Informe os dados do seu carro atual para estimar o valor de referência (tabela FIPE) a ser usado como entrada.</p>
+    <div class="form-grid2">
+      <div class="form-row"><label>Marca / Modelo</label><input id="ti-model" placeholder="Ex: Honda Civic EXL"></div>
+      <div class="form-row"><label>Ano</label><input id="ti-year" type="number" value="2021"></div>
+    </div>
+    <div class="form-row"><label>Quilometragem</label><input id="ti-km" type="number" value="40000"></div>
+    <div class="form-row"><label>Veículo desejado na GC Luxury Cars</label>
+      <select id="ti-target">${CATALOG.map(c=>`<option value="${c.id}">${c.brand} ${c.model} — ${fmtBRL(c.price)}</option>`).join('')}</select>
+    </div>
+    <button class="btn gold" onclick="calcTradeIn()">Consultar valor de referência</button>
+    <div id="ti-result"></div>
+    <div class="note">Valor de referência simulado com base em faixa de mercado. Em produção, este campo consultaria a Tabela FIPE oficial (ex.: API FIPE/BrasilAPI) em tempo real, seguida de vistoria presencial do veículo.</div>
+  </div>`;
+}
+
+function testdriveView(){
+  return `
+  <div class="section" style="max-width:640px">
+    <span class="eyebrow">Agendamento</span>
+    <h2>Agende seu test drive</h2>
+    <p class="panel-sub">Escolha o veículo, data e horário. Você recebe a confirmação por e-mail.</p>
+    <div class="form-row"><label>Veículo</label>
+      <select id="td-car">${CATALOG.map(c=>`<option value="${c.id}">${c.brand} ${c.model}</option>`).join('')}</select>
+    </div>
+    <div class="form-grid2">
+      <div class="form-row"><label>Nome</label><input id="td-name" placeholder="Seu nome completo" value="${state.user?state.user.name:''}"></div>
+      <div class="form-row"><label>E-mail</label><input id="td-email" placeholder="voce@email.com" value="${state.user?state.user.email:''}"></div>
+    </div>
+    <div class="form-grid2">
+      <div class="form-row"><label>Data</label><input id="td-date" type="date"></div>
+      <div class="form-row"><label>Horário</label><input id="td-time" type="time" value="10:00"></div>
+    </div>
+    <button class="btn gold" onclick="scheduleTestDrive()">Confirmar agendamento</button>
+    <div id="td-result"></div>
+    <div class="note">Este protótipo simula a confirmação e prepara um e-mail real via seu cliente de e-mail padrão. Em produção, o envio automático de e-mail/SMS exigiria integração de backend com um provedor (ex.: SendGrid, Twilio).</div>
+  </div>`;
+}
+
+function accountView(){
+  return `<div class="section"><span class="eyebrow">Área do cliente</span><h2>Olá, ${state.user.name}</h2><p class="panel-sub">Acompanhe seus pedidos, trocas e test drives.</p><div id="account-activity"><div class="result-box">Carregando sua atividade...</div></div></div>`;
+}
+async function loadAccountActivity(){
+  const holder = document.getElementById('account-activity');
+  if(!holder || !API_BASE || !state.apiUserId) return;
+  const response = await fetch(`${API_BASE}/me/activity`, {headers:apiHeaders()});
+  if(!response.ok){ holder.innerHTML='<div class="result-box">Não foi possível carregar sua atividade.</div>'; return; }
+  const data = await response.json();
+  const rows = [...data.orders.map(item => `<div class="result-line"><span>Pedido · ${item.brand} ${item.model}</span><b>${item.status}</b></div>`), ...data.trades.map(item => `<div class="result-line"><span>Troca · ${item.brand} ${item.model}</span><b>${item.status}</b></div>`), ...data.testDrives.map(item => `<div class="result-line"><span>Test drive · ${item.brand} ${item.model}</span><b>${item.date} ${item.time}</b></div>`)];
+  holder.innerHTML = `<div class="result-box">${rows.length ? rows.join('') : '<div class="result-line"><span>Nenhuma atividade registrada.</span></div>'}</div>`;
+}
+
+function adminView(){
+  const totalStock = ADMIN_CARS.reduce((a,c)=>a+c.stock,0);
+  const totalValue = ADMIN_CARS.reduce((a,c)=>a+c.price*c.stock,0);
+  const salesMock = [3,5,2,7,6,9,4];
+  const days = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+  const maxSale = Math.max(...salesMock);
+  return `
+  <div class="section">
+    <span class="eyebrow">Restrito</span>
+    <h2>Painel do administrador</h2>
+    <div class="tabbar">
+      <button class="active">Estoque &amp; Catálogo</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px">
+      <div class="result-box"><div class="result-line"><span>Veículos cadastrados</span><b>${ADMIN_CARS.length}</b></div></div>
+      <div class="result-box"><div class="result-line"><span>Unidades em estoque</span><b>${totalStock}</b></div></div>
+      <div class="result-box"><div class="result-line"><span>Valor total em estoque</span><b>${fmtBRL(totalValue)}</b></div></div>
+    </div>
+    <div id="admin-summary-extra" class="result-box">Carregando indicadores...</div>
+
+    <h3 style="font-family:var(--font-display);font-size:18px">Relatório de vendas (últimos 7 dias — dados de exemplo)</h3>
+    <div class="bars">${salesMock.map((v,i)=>`<div class="bar" style="height:${v/maxSale*100}%"><span>${days[i]}</span></div>`).join('')}</div>
+
+    <h3 style="font-family:var(--font-display);font-size:18px;margin-top:40px">Gerenciar veículos</h3>
+    <table class="admin">
+      <thead><tr><th>Modelo</th><th>Preço (R$)</th><th>Estoque</th><th>Ações</th></tr></thead>
+      <tbody>
+        ${ADMIN_CARS.map(c=>`
+          <tr>
+            <td>${c.brand} ${c.model}</td>
+            <td><input type="number" value="${c.price}" onchange="updateCar(${c.id},'price',this.value)"></td>
+            <td><input type="number" value="${c.stock}" style="width:70px" onchange="updateCar(${c.id},'stock',this.value)"></td>
+            <td><button class="btn small" onclick="openEditCar(${c.id})">Editar</button> <button class="btn small danger" onclick="removeCar(${c.id})">Remover</button></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+
+    <h3 style="font-family:var(--font-display);font-size:18px;margin-top:40px">Adicionar novo veículo</h3>
+    <div class="form-grid2">
+      <div class="form-row"><label>Marca</label><input id="new-brand"></div>
+      <div class="form-row"><label>Modelo</label><input id="new-model"></div>
+    </div>
+    <div class="form-grid2">
+      <div class="form-row"><label>Preço (R$)</label><input id="new-price" type="number"></div>
+      <div class="form-row"><label>Estoque</label><input id="new-stock" type="number" value="1"></div>
+    </div>
+    <div class="form-row"><label>Imagens do veículo</label><input id="new-images" type="file" accept="image/*" multiple></div>
+    <button class="btn gold" onclick="addCar()">Adicionar ao catálogo</button>
+    <div class="note">As alterações ficam salvas neste navegador. Em produção, o painel gravaria os dados em um banco de dados por meio de uma API autenticada.</div>
+    <h3 style="font-family:var(--font-display);font-size:18px;margin-top:40px">Pedidos, trocas e agendamentos</h3>
+    <button class="btn small" id="refresh-records" onclick="loadAdminRecords(true)">Atualizar registros</button>
+    <div id="admin-records" class="result-box">Carregando registros...</div>
+  </div>`;
+}
+async function loadAdminRecords(showFeedback = false){
+  const holder = document.getElementById('admin-records');
+  if(!holder || !API_BASE || !state.apiUserId) return;
+  const refreshButton = document.getElementById('refresh-records');
+  if(showFeedback && refreshButton){ refreshButton.disabled = true; refreshButton.textContent = 'Atualizando...'; }
+  try{
+    const response = await fetch(`${API_BASE}/admin/records`, {headers:apiHeaders()});
+    if(!response.ok) throw new Error('records request failed');
+    const data = await response.json();
+  const records = [...data.orders.map(item => ({...item, type:'orders', label:`Pedido · ${item.brand} ${item.model}`, value:fmtBRL(item.amount)})), ...data.trades.map(item => ({...item, type:'trades', label:`Troca · ${item.brand} ${item.model}`, value:fmtBRL(item.remaining_amount)})), ...data.testDrives.map(item => ({...item, type:'testDrives', label:`Test drive · ${item.brand} ${item.model}`, value:`${item.date} ${item.time}`}))];
+  const statusOptions = ['pending','approved','rejected','scheduled','completed'];
+  holder.innerHTML = records.length ? records.map(item => `<div class="result-line"><span>${item.label}<small style="display:block;color:var(--text-dim)">${item.value || ''}</small></span><select onchange="updateRecordStatus('${item.type}', ${item.id}, this.value)">${statusOptions.map(status => `<option value="${status}" ${status===item.status?'selected':''}>${status}</option>`).join('')}</select></div>`).join('') : '<div class="result-line"><span>Nenhum registro encontrado.</span></div>';
+    holder.innerHTML += `<h4 style="font-family:var(--font-display);margin:20px 0 8px">Histórico de alterações</h4>${data.history.length ? data.history.map(item => `<div class="result-line"><span>${item.action} · ${item.entity} #${item.entity_id}</span><b>${item.user_name || 'sistema'}</b></div>`).join('') : '<div class="result-line"><span>Nenhuma alteração registrada.</span></div>'}`;
+    if(showFeedback) toast(`Registros atualizados às ${new Date().toLocaleTimeString('pt-BR')}.`);
+  }catch(error){
+    holder.textContent='Não foi possível conectar ao servidor. Inicie o Node com npm start e tente novamente.';
+    if(showFeedback) toast('Servidor offline. Execute npm start.');
+  }finally{
+    if(refreshButton){ refreshButton.disabled = false; refreshButton.textContent = 'Atualizar registros'; }
+  }
+}
+async function loadAdminSummary(){
+  const holder = document.getElementById('admin-summary-extra');
+  if(!holder || !API_BASE || !state.apiUserId) return;
+  const response = await fetch(`${API_BASE}/admin/summary`, {headers:apiHeaders()});
+  if(!response.ok) return;
+  const summary = await response.json();
+  holder.innerHTML = `<div class="result-line"><span>Pedidos registrados</span><b>${summary.orders}</b></div><div class="result-line"><span>Trocas solicitadas</span><b>${summary.trades}</b></div><div class="result-line"><span>Test drives agendados</span><b>${summary.testDrives}</b></div>`;
+}
+async function updateRecordStatus(type, id, status){
+  const response = await fetch(`${API_BASE}/admin/records/${type}/${id}`, {method:'PATCH', headers:apiHeaders(true), body:JSON.stringify({status})});
+  toast(response.ok ? 'Status atualizado.' : 'Não foi possível atualizar o status.');
+  if(response.ok) loadAdminRecords();
+}
+
+/* ---------------- MODAL (vehicle detail / login / signup / checkout) ---------------- */
+let modalType = null;
+function modalHTML(){
+  if(!modalType) return `<div class="modal-overlay" id="modal-overlay"></div>`;
+  let inner = '';
+  if(modalType==='vehicle') inner = vehicleModalHTML(state.currentCar);
+  if(modalType==='login') inner = loginModalHTML();
+  if(modalType==='signup') inner = signupModalHTML();
+  if(modalType==='adminlogin') inner = adminLoginModalHTML();
+  if(modalType==='checkout') inner = checkoutModalHTML(state.currentCar);
+  if(modalType==='editcar') inner = editCarModalHTML(state.currentCar);
+  return `<div class="modal-overlay show" id="modal-overlay" onclick="if(event.target.id==='modal-overlay')closeModal()">
+    <div class="modal ${modalType!=='vehicle'?'small':''}">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      ${inner}
+    </div>
+  </div>`;
+}
+
+function vehicleModalHTML(c){
+  return `
+  <div class="vd-grid">
+    <div class="vd-viewer">
+      <div class="vd-stage" id="vd-stage">
+        <div class="vd-car" id="vd-car">${carVisual(c, 'vehicle-image')}</div>
+      </div>
+      <div class="hint">ARRASTE PARA GIRAR · VISUALIZAÇÃO 360°</div>
+      ${c.images && c.images.length > 1 ? `<div class="vd-gallery-controls"><button class="btn small" onclick="changeViewerFrame(-1)" aria-label="Foto anterior">‹</button><span class="vd-frame-count" id="vd-frame-count">1 / ${c.images.length}</span><button class="btn small" onclick="changeViewerFrame(1)" aria-label="Próxima foto">›</button></div>` : ''}
+    </div>
+    <div class="vd-panel">
+      <span class="eyebrow">${c.category} · ${c.year}</span>
+      <h2>${c.brand} ${c.model}</h2>
+      <div class="tagline">"${c.tagline}"</div>
+      <div class="price-big">${fmtBRL(c.price)}</div>
+      <div class="spec-grid">
+        <div><span>Motor</span>${c.engine}</div>
+        <div><span>Potência</span>${c.power}</div>
+        <div><span>0–100 km/h</span>${c.accel}</div>
+        <div><span>Vel. máxima</span>${c.topSpeed}</div>
+        <div><span>Consumo</span>${c.consumption}</div>
+        <div><span>Estoque</span>${c.stock} unidade(s)</div>
+      </div>
+      <div class="vd-desc">${c.desc}</div>
+      <div class="optlist">${c.optionals.map(o=>`<span>${o}</span>`).join('')}</div>
+      <div class="vd-actions">
+        ${c.stock > 0 ? `<button class="btn gold" onclick="openCheckout(${c.id})">Comprar agora</button>` : `<button class="btn" disabled>Sem estoque</button>`}
+        <button class="btn" onclick="closeModal();setTab('financing')">Financiar</button>
+        <button class="btn" onclick="closeModal();setTab('tradein')">Dar meu carro na troca</button>
+        <button class="btn" onclick="closeModal();setTab('testdrive')">Agendar test drive</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function loginModalHTML(){
+  return `
+  <div style="padding:30px">
+    <div class="panel-title">Entrar</div>
+    <div class="panel-sub">Acesse sua conta GC Luxury Cars.</div>
+    <div class="form-row"><label>E-mail</label><input id="login-email" placeholder="voce@email.com"></div>
+    <div class="form-row"><label>Senha</label><input id="login-pass" type="password" placeholder="••••••••"></div>
+    <button class="btn gold" style="width:100%" onclick="doLogin()">Entrar</button>
+    <div class="note">Autenticação simulada nesta demonstração (sessão local do navegador). Em produção, as senhas seriam validadas com hash (bcrypt) em um backend seguro.</div>
+  </div>`;
+}
+function signupModalHTML(){
+  return `
+  <div style="padding:30px">
+    <div class="panel-title">Criar conta</div>
+    <div class="panel-sub">Cadastre-se para comprar, financiar e agendar test drives.</div>
+    <div class="form-row"><label>Nome completo</label><input id="signup-name"></div>
+    <div class="form-row"><label>E-mail</label><input id="signup-email"></div>
+    <div class="form-row"><label>Senha</label><input id="signup-pass" type="password"></div>
+    <div class="form-row"><label>Tipo de acesso</label>
+      <select id="signup-role" onchange="toggleSignupAdmin()">
+        <option value="user">Cliente</option>
+        <option value="admin">Administrador</option>
+      </select>
+    </div>
+    <div class="form-row" id="signup-admin-row" style="display:none"><label>Confirmação do administrador principal</label><input id="signup-admin-pass" type="password" placeholder="Senha de confirmação"></div>
+    <button class="btn gold" style="width:100%" onclick="doSignup()">Cadastrar</button>
+    <div class="note">A senha da nova conta pode ser escolhida livremente. Para liberar o perfil de administrador, é necessária a confirmação do administrador principal.</div>
+  </div>`;
+}
+
+function adminLoginModalHTML(){
+  return `
+  <div style="padding:30px">
+    <div class="panel-title">Acesso administrativo</div>
+    <div class="panel-sub">Área restrita — clientes não têm acesso a este painel.</div>
+    <div class="form-row"><label>E-mail do administrador</label><input id="admin-email" type="email" value="gcadmin@gmail.com"></div>
+    <div class="form-row"><label>Senha de administrador</label><input id="admin-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
+    <button class="btn gold" style="width:100%" onclick="doAdminLogin()">Entrar no painel</button>
+    <div class="note">O administrador principal e os administradores autorizados entram com o e-mail e a senha cadastrados.</div>
+  </div>`;
+}
+
+function checkoutModalHTML(c){
+  const amount = state.paymentAmount ?? c.price;
+  const isTrade = state.paymentMode === 'tradein';
+  const title = isTrade ? 'Finalizar troca' : state.paymentMode === 'financing' ? 'Finalizar compra financiada' : 'Pagamento';
+  return `
+  <div style="padding:30px">
+    <div class="panel-title">${title}</div>
+    <div class="panel-sub">${c.brand} ${c.model} — ${fmtBRL(amount)}</div>
+    ${isTrade ? `<div class="form-grid2"><div class="form-row"><label>Nome completo</label><input id="trade-name" placeholder="Seu nome"></div><div class="form-row"><label>Telefone</label><input id="trade-phone" placeholder="(00) 00000-0000"></div></div><div class="form-row"><label>E-mail</label><input id="trade-email" type="email" placeholder="voce@email.com"></div>` : ''}
+    <div class="tabbar" id="pay-tabs">
+      <button class="active" onclick="setPayTab('pix')" id="tab-pix">PIX</button>
+      <button onclick="setPayTab('card')" id="tab-card">Cartão de crédito</button>
+    </div>
+    <div id="pay-content">${pixPaneHTML(c, amount)}</div>
+  </div>`;
+}
+function editCarModalHTML(c){
+  return `
+  <div style="padding:30px">
+    <div class="panel-title">Editar veículo</div>
+    <div class="panel-sub">${c.brand} ${c.model}</div>
+    <div class="form-grid2"><div class="form-row"><label>Marca</label><input id="edit-brand" value="${c.brand}"></div><div class="form-row"><label>Modelo</label><input id="edit-model" value="${c.model}"></div></div>
+    <div class="form-grid2"><div class="form-row"><label>Ano</label><input id="edit-year" type="number" value="${c.year}"></div><div class="form-row"><label>Categoria</label><input id="edit-category" value="${c.category}"></div></div>
+    <div class="form-grid2"><div class="form-row"><label>Valor (R$)</label><input id="edit-price" type="number" value="${c.price}" min="0"></div><div class="form-row"><label>Estoque</label><input id="edit-stock" type="number" value="${c.stock}" min="0"></div></div>
+    <div class="form-grid2"><div class="form-row"><label>Motor</label><input id="edit-engine" value="${c.engine}"></div><div class="form-row"><label>Tipo de motor</label><input id="edit-engine-type" value="${c.engineType}"></div></div>
+    <div class="form-grid2"><div class="form-row"><label>Potência</label><input id="edit-power" value="${c.power}"></div><div class="form-row"><label>0–100 km/h</label><input id="edit-accel" value="${c.accel}"></div></div>
+    <div class="form-grid2"><div class="form-row"><label>Velocidade máxima</label><input id="edit-top-speed" value="${c.topSpeed}"></div><div class="form-row"><label>Consumo</label><input id="edit-consumption" value="${c.consumption}"></div></div>
+    <div class="form-row"><label>Cor</label><input id="edit-color" type="color" value="${c.color}"></div>
+    <div class="form-row"><label>Chamada comercial</label><input id="edit-tagline" value="${c.tagline || ''}"></div>
+    <div class="form-row"><label>Descrição</label><textarea id="edit-desc">${c.desc || ''}</textarea></div>
+    <button class="btn gold" style="width:100%" onclick="saveCarChanges(${c.id})">Salvar alterações</button>
+  </div>`;
+}
+function pixPaneHTML(c, amount = state.paymentAmount ?? c.price){
+  return `
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px">Escaneie o QR Code abaixo com o app do seu banco para pagar via PIX.</p>
+    <div id="qr-holder" style="background:#fff;padding:14px;border-radius:6px;display:inline-block"></div>
+    <div class="result-box" style="margin-top:14px">
+      <div class="result-line"><span>Valor</span><b>${fmtBRL(amount)}</b></div>
+      <div class="result-line"><span>Chave PIX</span><b>${PIX_KEY}</b></div>
+    </div>
+    <button class="btn gold" style="margin-top:12px" onclick="confirmPayment('PIX')">Confirmar pagamento via PIX</button>
+    <div class="note">QR Code e chave "copia e cola" apontam para a mesma chave PIX. A chave de telefone precisa estar cadastrada no banco exatamente neste formato; caso contrário, substitua <b>${PIX_KEY}</b> por uma chave PIX válida da empresa.</div>
+  `;
+}
+function cardPaneHTML(c, amount = state.paymentAmount ?? c.price){
+  return `
+    <div class="form-row"><label>Número do cartão</label><input placeholder="0000 0000 0000 0000"></div>
+    <div class="form-grid2">
+      <div class="form-row"><label>Validade</label><input placeholder="MM/AA"></div>
+      <div class="form-row"><label>CVV</label><input placeholder="123"></div>
+    </div>
+    <div class="form-row"><label>Nome impresso no cartão</label><input placeholder="Nome completo"></div>
+    <button class="btn gold" style="width:100%" onclick="confirmCardPayment()">Pagar ${fmtBRL(amount)}</button>
+    <div class="note">Por segurança, um site real nunca processa cartões diretamente no navegador. A cobrança precisa acontecer em um servidor (backend), usando a chave secreta de um provedor como Stripe, Mercado Pago ou PagSeguro — nunca exposta no código do site.</div>
+  `;
+}
+
+/* ============================================================
+   AÇÕES / HANDLERS
+   ============================================================ */
+function setTab(id){
+  if(id==='admin' && !state.isAdmin){ openModal('adminlogin'); return; }
+  state.currentTab = id; closeModal(); render(); window.scrollTo(0,0);
+}
+function setFilter(cat){ state.catalogFilter = cat; render(); }
+function setHero(i){ state.heroIndex = i; updateHeroDOM(); }
+function startHeroRotation(){
+  clearInterval(window.__heroTimer);
+  window.__heroTimer = setInterval(()=>{
+    state.heroIndex = (state.heroIndex+1)%HERO_SLIDES.length;
+    updateHeroDOM();
+  }, 5500);
+}
+function updateHeroDOM(){
+  document.querySelectorAll('.hero-slide').forEach((el,i)=>el.classList.toggle('active', i===state.heroIndex));
+  document.querySelectorAll('[data-dot]').forEach((el,i)=>el.classList.toggle('active', i===state.heroIndex));
+}
+
+function openVehicle(id){
+  state.currentCar = CATALOG.find(c=>c.id===id);
+  modalType = 'vehicle';
+  render();
+  setupViewerDrag();
+}
+function openModal(type){ modalType = type; render(); }
+function openCheckout(id){
+  state.currentCar = CATALOG.find(c=>c.id===id);
+  if(!state.currentCar || state.currentCar.stock <= 0){ toast('Este veículo está sem estoque.'); return; }
+  state.paymentAmount = state.currentCar.price;
+  state.paymentMode = 'vehicle';
+  modalType = 'checkout';
+  render();
+  setTimeout(()=>renderQR(state.currentCar), 30);
+}
+function openPayment(mode, id, amount){
+  state.currentCar = CATALOG.find(c=>c.id===id);
+  state.paymentAmount = Math.max(amount, 0);
+  state.paymentMode = mode;
+  modalType = 'checkout';
+  render();
+  setTimeout(()=>renderQR(state.currentCar), 30);
+}
+function closeModal(){ modalType=null; render(); }
+function changeViewerFrame(direction){
+  const image = document.querySelector('#vd-car img');
+  const frames = state.currentCar && state.currentCar.images || [];
+  if(!image || frames.length < 2) return;
+  const current = Number(image.dataset.frame) || 0;
+  const next = (current + direction + frames.length) % frames.length;
+  image.src = frames[next];
+  image.dataset.frame = next;
+  const counter = document.getElementById('vd-frame-count');
+  if(counter) counter.textContent = `${next + 1} / ${frames.length}`;
+}
+function openEditCar(id){
+  if(!state.isAdmin) return;
+  state.currentCar = ADMIN_CARS.find(car => car.id === id);
+  modalType = 'editcar';
+  render();
+}
+function saveCarChanges(id){
+  const car = ADMIN_CARS.find(item => item.id === id);
+  if(!car) return;
+  car.brand = document.getElementById('edit-brand').value.trim();
+  car.model = document.getElementById('edit-model').value.trim();
+  car.year = parseInt(document.getElementById('edit-year').value) || car.year;
+  car.category = document.getElementById('edit-category').value.trim();
+  car.price = parseFloat(document.getElementById('edit-price').value) || 0;
+  car.stock = Math.max(parseInt(document.getElementById('edit-stock').value) || 0, 0);
+  car.engine = document.getElementById('edit-engine').value.trim();
+  car.engineType = document.getElementById('edit-engine-type').value.trim();
+  car.power = document.getElementById('edit-power').value.trim();
+  car.accel = document.getElementById('edit-accel').value.trim();
+  car.topSpeed = document.getElementById('edit-top-speed').value.trim();
+  car.consumption = document.getElementById('edit-consumption').value.trim();
+  car.color = document.getElementById('edit-color').value;
+  car.tagline = document.getElementById('edit-tagline').value.trim();
+  car.desc = document.getElementById('edit-desc').value.trim() || 'Descrição não informada.';
+  CATALOG = ADMIN_CARS;
+  persistData();
+  if(API_BASE && state.apiUserId){
+    fetch(`${API_BASE}/cars/${id}`, {method:'PUT', headers:apiHeaders(true), body:JSON.stringify({brand:car.brand, model:car.model, year:car.year, category:car.category, color:car.color, price:car.price, stock:car.stock, description:car.desc, engine_type:car.engineType, engine:car.engine, power:car.power, acceleration:car.accel, top_speed:car.topSpeed, consumption:car.consumption, tagline:car.tagline})});
+  }
+  modalType = null;
+  render();
+  toast('Alterações do veículo salvas.');
+}
+
+function setPayTab(which){
+  document.getElementById('tab-pix').classList.toggle('active', which==='pix');
+  document.getElementById('tab-card').classList.toggle('active', which==='card');
+  const content = document.getElementById('pay-content');
+  content.innerHTML = which==='pix' ? pixPaneHTML(state.currentCar) : cardPaneHTML(state.currentCar);
+  if(which==='pix') setTimeout(()=>renderQR(state.currentCar), 30);
+}
+function validateTradeDetails(){
+  if(state.paymentMode !== 'tradein') return true;
+  const name = document.getElementById('trade-name').value.trim();
+  const phone = document.getElementById('trade-phone').value.trim();
+  const email = document.getElementById('trade-email').value.trim();
+  if(!name || phone.replace(/\D/g,'').length < 10 || !email.includes('@')){
+    toast('Preencha nome, telefone e e-mail válidos para finalizar a troca.'); return false;
+  }
+  return true;
+}
+function confirmPayment(method){
+  if(!validateTradeDetails()) return;
+  if(API_BASE){
+    if(!state.apiUserId){ toast('Entre na sua conta para finalizar o pagamento.'); return; }
+    const payload = state.paymentMode === 'tradein'
+      ? {targetCarId:state.currentCar.id, customerName:document.getElementById('trade-name').value.trim(), phone:document.getElementById('trade-phone').value.trim(), email:document.getElementById('trade-email').value.trim(), estimatedValue:state.currentCar.price - state.paymentAmount, remainingAmount:state.paymentAmount, paymentMethod:method.toLowerCase()}
+      : {carId:state.currentCar.id, amount:state.paymentAmount, paymentMethod:method.toLowerCase()};
+    const endpoint = state.paymentMode === 'tradein' ? 'trade-ins' : 'orders';
+    fetch(`${API_BASE}/${endpoint}`, {method:'POST', headers:apiHeaders(true), body:JSON.stringify(payload)})
+      .then(response => response.ok ? toast(`Pagamento via ${method} registrado para análise.`) : toast('Não foi possível registrar o pagamento.'));
+    return;
+  }
+  toast(`Pagamento via ${method} registrado para análise.`);
+}
+function confirmCardPayment(){
+  if(!validateTradeDetails()) return;
+  const fields = [...document.querySelectorAll('#pay-content input')].map(input => input.value.trim());
+  if(fields.some(value => !value) || fields[0].replace(/\D/g,'').length < 13 || fields[1].length < 4 || fields[2].replace(/\D/g,'').length < 3){
+    toast('Confira número, validade e CVV do cartão.'); return;
+  }
+  confirmPayment('card');
+}
+
+/* PIX BR Code (EMV) — payload estático de demonstração, formato real */
+function pixPayload(car, amount = state.paymentAmount ?? car.price){
+  function tlv(id,value){ const len = String(value.length).padStart(2,'0'); return id+len+value; }
+  const merchantName = "GC LUXURY CARS".substring(0,25);
+  const merchantCity = "SAO PAULO".substring(0,15);
+  const key = PIX_KEY;
+  const amountValue = amount.toFixed(2);
+  const gui = tlv('00','br.gov.bcb.pix');
+  const chave = tlv('01', key);
+  const mai = tlv('26', gui+chave);
+  let payload = tlv('00','01') + mai + tlv('52','0000') + tlv('53','986') +
+    tlv('54', amountValue) + tlv('58','BR') + tlv('59', merchantName) + tlv('60', merchantCity) + tlv('62', tlv('05','***'));
+  payload += '6304';
+  // CRC16-CCITT calculado sobre o payload (com placeholder 6304 no fim)
+  function crc16(str){
+    let crc = 0xFFFF;
+    for(let i=0;i<str.length;i++){
+      crc ^= str.charCodeAt(i) << 8;
+      for(let j=0;j<8;j++){
+        crc = (crc & 0x8000) ? ((crc<<1) ^ 0x1021) : (crc<<1);
+        crc &= 0xFFFF;
+      }
+    }
+    return crc.toString(16).toUpperCase().padStart(4,'0');
+  }
+  return payload + crc16(payload);
+}
+function renderQR(car){
+  const holder = document.getElementById('qr-holder');
+  if(!holder) return;
+  holder.innerHTML='';
+  new QRCode(holder, {text: pixPayload(car), width:180, height:180});
+}
+
+async function doLogin(){
+  const email = document.getElementById('login-email').value || 'cliente@email.com';
+  const password = document.getElementById('login-pass').value;
+  if(!email.includes('@') || !password){ toast('Informe um e-mail e uma senha válidos.'); return; }
+  if(API_BASE){
+    const response = await fetch(`${API_BASE}/auth/login`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, password})});
+    if(response.ok){
+      const account = await response.json();
+      state.user = {name:account.name, email:account.email}; state.apiUserId = account.id; state.apiToken = account.token; state.isAdmin = account.role === 'admin';
+      state.currentTab = state.isAdmin ? 'admin' : 'home'; toast(state.isAdmin ? 'Login administrativo realizado.' : 'Login realizado com sucesso.'); closeModal(); return;
+    }
+    toast('E-mail ou senha inválidos.'); return;
+  }
+  const admin = ADMIN_ACCOUNTS.find(account => account.email === email && account.password === password);
+  if(admin){
+    state.user = {name: admin.name, email: admin.email};
+    state.isAdmin = true;
+    state.currentTab = 'admin';
+    toast('Login administrativo realizado.');
+    closeModal();
+    return;
+  }
+  state.user = {name: email.split('@')[0], email};
+  toast('Login realizado com sucesso.');
+  closeModal();
+}
+async function doSignup(){
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-pass').value;
+  const role = document.getElementById('signup-role').value;
+  if(!name || !email.includes('@') || password.length < 6){ toast('Preencha nome, e-mail válido e senha com pelo menos 6 caracteres.'); return; }
+  if(role === 'admin' && document.getElementById('signup-admin-pass').value !== ADMIN_PASSWORD){
+    toast('Confirmação do admin principal incorreta.');
+    return;
+  }
+  if(ADMIN_ACCOUNTS.some(account => account.email === email)){ toast('Este e-mail já está cadastrado.'); return; }
+  if(API_BASE){
+    const response = await fetch(`${API_BASE}/auth/register`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name, email, password, role, adminConfirmation:document.getElementById('signup-admin-pass').value})});
+    if(!response.ok){ toast((await response.json()).error || 'Não foi possível criar a conta.'); return; }
+    const account = await response.json();
+    state.user = {name:account.name, email:account.email}; state.apiUserId = account.id; state.apiToken = account.token; state.isAdmin = account.role === 'admin'; state.currentTab = state.isAdmin ? 'admin' : 'home';
+    toast(state.isAdmin ? 'Cadastro administrativo realizado.' : 'Cadastro realizado com sucesso. Bem-vindo(a)!'); closeModal(); return;
+  }
+  if(role === 'admin') ADMIN_ACCOUNTS.push({email, password, name});
+  persistData();
+  state.user = {name, email};
+  state.isAdmin = role === 'admin';
+  if(state.isAdmin) state.currentTab = 'admin';
+  toast(state.isAdmin ? 'Cadastro administrativo realizado.' : 'Cadastro realizado com sucesso. Bem-vindo(a)!');
+  closeModal();
+}
+function toggleSignupAdmin(){
+  const role = document.getElementById('signup-role').value;
+  document.getElementById('signup-admin-row').style.display = role === 'admin' ? 'block' : 'none';
+}
+function logout(){ state.user=null; render(); }
+
+async function doAdminLogin(){
+  const email = document.getElementById('admin-email')?.value || 'admin@gcluxurycars.com';
+  const pass = document.getElementById('admin-pass').value;
+  if(API_BASE){
+    const response = await fetch(`${API_BASE}/auth/login`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, password:pass})});
+    if(!response.ok){ toast('E-mail ou senha inválidos.'); return; }
+    const account = await response.json();
+    if(account.role !== 'admin'){ toast('Esta conta não possui acesso administrativo.'); return; }
+    state.isAdmin = true; state.apiUserId = account.id; state.apiToken = account.token; state.user = {name:account.name, email:account.email}; state.currentTab = 'admin'; closeModal(); toast('Acesso administrativo liberado.'); return;
+  }
+  const account = ADMIN_ACCOUNTS.find(admin => admin.email === email && admin.password === pass);
+  if(account){
+    state.isAdmin = true;
+    state.user = {name: account.name, email: account.email};
+    state.currentTab = 'admin';
+    closeModal();
+    toast('Acesso administrativo liberado.');
+  } else {
+    toast('Senha incorreta.');
+  }
+}
+function logoutAdmin(){
+  state.isAdmin = false;
+  state.user = null;
+  state.apiUserId = null;
+  if(state.currentTab==='admin') state.currentTab = 'home';
+  render();
+}
+
+function calcFinancing(){
+  const car = CATALOG.find(c=>c.id==document.getElementById('fin-car').value);
+  const down = parseFloat(document.getElementById('fin-down').value);
+  const term = parseInt(document.getElementById('fin-term').value);
+  const ratePercent = parseFloat(document.getElementById('fin-rate').value);
+  if(!car || !Number.isFinite(down) || down < 0 || down > car.price || !Number.isInteger(term) || term < 6 || term > 72 || !Number.isFinite(ratePercent) || ratePercent < 0){
+    toast('Confira entrada, prazo e taxa do financiamento.'); return;
+  }
+  const rate = ratePercent/100;
+  const financed = Math.max(car.price - down, 0);
+  const pmt = rate>0 ? financed*rate*Math.pow(1+rate,term)/(Math.pow(1+rate,term)-1) : financed/term;
+  const total = pmt*term + down;
+  document.getElementById('fin-result').innerHTML = `
+    <div class="result-box">
+      <div class="result-line"><span>Valor financiado</span><b>${fmtBRL(financed)}</b></div>
+      <div class="result-line"><span>Parcela mensal estimada</span><b>${fmtBRL(pmt)}</b></div>
+      <div class="result-line"><span>Total pago ao final (${term}x)</span><b>${fmtBRL(total)}</b></div>
+    </div>`;
+  document.getElementById('fin-result').innerHTML += `<button class="btn gold" style="margin-top:12px" onclick="openPayment('financing', ${car.id}, ${financed})">Finalizar compra financiada</button>`;
+}
+
+function calcTradeIn(){
+  const model = document.getElementById('ti-model').value || 'Veículo informado';
+  const year = parseInt(document.getElementById('ti-year').value);
+  const km = parseInt(document.getElementById('ti-km').value);
+  const target = CATALOG.find(c=>c.id==document.getElementById('ti-target').value);
+  if(!Number.isInteger(year) || year < 1950 || year > new Date().getFullYear() || !Number.isInteger(km) || km < 0 || !target){
+    toast('Informe ano e quilometragem válidos.'); return;
+  }
+  // estimativa simulada (idade do carro + depreciação por km) — referência, não é a FIPE oficial
+  const age = Math.max(new Date().getFullYear()-year, 0);
+  let base = 180000 * Math.pow(0.9, age);
+  base -= (km/10000)*3000;
+  base = Math.max(base, 15000);
+  const remaining = Math.max(target.price - base, 0);
+  document.getElementById('ti-result').innerHTML = `
+    <div class="result-box">
+      <div class="result-line"><span>${model} (${year})</span><b>${fmtBRL(base)}</b></div>
+      <div class="result-line"><span>Valor a financiar/pagar após a troca</span><b>${fmtBRL(remaining)}</b></div>
+      <div class="result-line"><span>Veículo escolhido</span><b>${target.brand} ${target.model}</b></div>
+    </div><button class="btn gold" style="margin-top:12px" onclick="openPayment('tradein', ${target.id}, ${remaining})">Finalizar troca</button>`;
+}
+
+async function scheduleTestDrive(){
+  const car = CATALOG.find(c=>c.id==document.getElementById('td-car').value);
+  const name = document.getElementById('td-name').value.trim();
+  const email = document.getElementById('td-email').value.trim();
+  const date = document.getElementById('td-date').value;
+  const time = document.getElementById('td-time').value;
+  if(!car || !name || !email.includes('@') || !date || !time){ toast('Preencha nome, e-mail, data e horário.'); return; }
+  if(API_BASE){
+    const response = await fetch(`${API_BASE}/test-drives`, {method:'POST', headers:apiHeaders(true), body:JSON.stringify({carId:car.id, name, email, date, time})});
+    if(!response.ok){ toast('Não foi possível registrar o agendamento.'); return; }
+  }
+  const subject = encodeURIComponent(`Confirmação de Test Drive — ${car.brand} ${car.model}`);
+  const body = encodeURIComponent(`Olá ${name},\n\nSeu test drive do ${car.brand} ${car.model} está agendado para ${date} às ${time}.\n\nGC Luxury Cars`);
+  document.getElementById('td-result').innerHTML = `
+    <div class="result-box">
+      <div class="result-line"><span>Veículo</span><b>${car.brand} ${car.model}</b></div>
+      <div class="result-line"><span>Data/Hora</span><b>${date} às ${time}</b></div>
+      <div class="result-line"><span>Status</span><b>Agendado ✓</b></div>
+    </div>
+    <div style="margin-top:12px"><a class="btn gold" href="mailto:${email}?subject=${subject}&body=${body}" style="display:inline-block;text-decoration:none">Enviar confirmação por e-mail</a></div>`;
+}
+
+function updateCar(id, field, value){
+  const car = ADMIN_CARS.find(c=>c.id===id);
+  car[field] = field==='price' ? parseFloat(value) : parseInt(value);
+  persistData();
+}
+function removeCar(id){
+  ADMIN_CARS = ADMIN_CARS.filter(c=>c.id!==id);
+  CATALOG = ADMIN_CARS;
+  persistData();
+  render();
+  toast('Veículo removido do catálogo.');
+}
+async function addCar(){
+  const brand = document.getElementById('new-brand').value.trim();
+  const model = document.getElementById('new-model').value.trim();
+  const price = parseFloat(document.getElementById('new-price').value)||0;
+  const stock = parseInt(document.getElementById('new-stock').value)||1;
+  if(!brand||!model){ toast('Preencha marca e modelo.'); return; }
+  const imageFiles = [...document.getElementById('new-images').files];
+  const images = await Promise.all(imageFiles.map(file => new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  })));
+  if(API_BASE && state.apiUserId){
+    const response = await fetch(`${API_BASE}/cars`, {method:'POST', headers:apiHeaders(true), body:JSON.stringify({brand, model, price, stock, images:images.filter(Boolean)})});
+    if(!response.ok){ toast('Não foi possível adicionar o veículo.'); return; }
+    await syncCatalogFromApi();
+    toast('Veículo adicionado ao catálogo.');
+    return;
+  }
+  const id = Math.max(...ADMIN_CARS.map(c=>c.id))+1;
+  ADMIN_CARS.push({id, brand, model, year:2024, category:'Novo cadastro', color:'#666', images:images.filter(Boolean),
+    price, stock, engineType:'v8', engine:'—', power:'—', accel:'—', topSpeed:'—', consumption:'—',
+    tagline:'Novo veículo cadastrado pelo administrador.', desc:'Descrição a ser preenchida.',
+    idealFor:'—', sellingPoint:'—', optionals:[]});
+  CATALOG = ADMIN_CARS;
+  persistData();
+  render();
+  toast('Veículo adicionado ao catálogo.');
+}
+
+/* ---------------- viewer 360 (arraste para girar) ---------------- */
+function setupViewerDrag(){
+  const stage = document.getElementById('vd-stage');
+  const car = document.getElementById('vd-car');
+  if(!stage||!car) return;
+  const image = car.querySelector('img');
+  const frames = state.currentCar && state.currentCar.images || [];
+  let dragging=false, lastX=0, rotY=0, frameDistance=0;
+  const start = (x)=>{dragging=true; lastX=x;};
+  const move = (x)=>{
+    if(!dragging) return;
+    const delta = x-lastX; lastX=x;
+    if(image && frames.length){
+      frameDistance += delta;
+      while(Math.abs(frameDistance) >= 45){
+        changeViewerFrame(frameDistance > 0 ? 1 : -1);
+        frameDistance += frameDistance > 0 ? -45 : 45;
+      }
+      return;
+    }
+    rotY += delta*0.6;
+    car.style.transform = `rotateY(${rotY}deg) rotateX(6deg)`;
+  };
+  const end = ()=>{dragging=false;};
+  stage.addEventListener('mousedown', e=>start(e.clientX));
+  window.addEventListener('mousemove', e=>move(e.clientX));
+  window.addEventListener('mouseup', end);
+  stage.addEventListener('touchstart', e=>start(e.touches[0].clientX));
+  stage.addEventListener('touchmove', e=>move(e.touches[0].clientX));
+  stage.addEventListener('touchend', end);
+}
+
+function attachGlobalHandlers(){ /* delegated via inline onclick for simplicity in this prototype */ }
+
+render();
+syncCatalogFromApi();
+</script>
+</body>
+</html>
