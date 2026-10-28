@@ -6,7 +6,7 @@
 
 Uma aplicação web para apresentar veículos de luxo, explorar o catálogo e demonstrar fluxos digitais de financiamento, troca de veículo e agendamento de test drive.
 
-![Showroom GC Luxury Cars](assets/showroom.jpg)
+![Showroom](assets/showroom.jpg)
 
 **Projeto de portfólio • Desenvolvimento Web**
 
