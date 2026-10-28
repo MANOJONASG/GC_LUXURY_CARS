@@ -14,7 +14,7 @@ fs.mkdirSync(backupDirectory, {recursive:true});
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-id');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-user-id');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, OPTIONS');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
@@ -153,6 +153,12 @@ function adminOnly(req, res, next) {
   next();
 }
 function validEmail(email) { return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+function createSession(userId) {
+  const token = require('crypto').randomBytes(32).toString('hex');
+  sessions.set(token, userId);
+  setTimeout(() => sessions.delete(token), 8 * 60 * 60 * 1000);
+  return token;
+}
 function carPayload(car) {
   const images = database.prepare('SELECT image_data FROM car_images WHERE car_id = ? ORDER BY sort_order, id').all(car.id).map(item => item.image_data);
   return {...car, images};
@@ -165,7 +171,7 @@ app.get('/api/cars', (req, res) => res.json(getCars()));
 
 app.post('/api/auth/register', (req, res) => {
   const {name, email, password, role = 'user', adminConfirmation} = req.body;
-  if (!name || !validEmail(email) || typeof password !== 'string' || password.length < 6) {
+  if (typeof name !== 'string' || !name.trim() || !validEmail(email) || typeof password !== 'string' || password.length < 6) {
     return res.status(400).json({error: 'Nome, e-mail válido e senha com pelo menos 6 caracteres são obrigatórios.'});
   }
   if (!['user', 'admin'].includes(role)) return res.status(400).json({error: 'Perfil inválido.'});
@@ -176,7 +182,11 @@ app.post('/api/auth/register', (req, res) => {
     const user = database.prepare('SELECT id, name, email, role FROM users WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json(user);
   } catch (error) {
-    res.status(409).json({error: 'Este e-mail já está cadastrado.'});
+    if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      return res.status(409).json({error: 'Este e-mail já está cadastrado.'});
+    }
+    console.error('Falha ao cadastrar usuário:', error);
+    res.status(500).json({error: 'Não foi possível criar a conta.'});
   }
 });
 
@@ -184,9 +194,7 @@ app.post('/api/auth/login', (req, res) => {
   const {email, password} = req.body;
   const user = database.prepare('SELECT * FROM users WHERE email = ?').get(String(email || '').trim().toLowerCase());
   if (!user || !bcrypt.compareSync(String(password || ''), user.password_hash)) return res.status(401).json({error: 'E-mail ou senha inválidos.'});
-  const token = require('crypto').randomBytes(32).toString('hex');
-  sessions.set(token, user.id);
-  setTimeout(() => sessions.delete(token), 8 * 60 * 60 * 1000);
+  const token = createSession(user.id);
   res.json({id: user.id, name: user.name, email: user.email, role: user.role, token});
 });
 

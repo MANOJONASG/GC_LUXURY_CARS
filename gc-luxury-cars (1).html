@@ -343,14 +343,13 @@ const CAR_DATA = [
 ];
 
 // cópia mutável usada pelo painel do administrador
-const STORAGE_KEYS = {cars:'gcLuxuryCars.cars', admins:'gcLuxuryCars.admins'};
+const STORAGE_KEYS = {cars:'gcLuxuryCars.cars'};
 function loadStored(key, fallback){
   try{return JSON.parse(localStorage.getItem(key)) || fallback;}catch(error){return fallback;}
 }
 function persistData(){
   try{
     localStorage.setItem(STORAGE_KEYS.cars, JSON.stringify(ADMIN_CARS));
-    localStorage.setItem(STORAGE_KEYS.admins, JSON.stringify(ADMIN_ACCOUNTS));
   }catch(error){ toast('Não foi possível salvar no navegador.'); }
 }
 let ADMIN_CARS = loadStored(STORAGE_KEYS.cars, JSON.parse(JSON.stringify(CAR_DATA)));
@@ -369,11 +368,39 @@ let state = {
   apiToken: null,
 };
 
-// Credencial do administrador principal. Em produção, isso ficaria no backend.
-const ADMIN_PASSWORD = 'GC.ADMIN';
-let ADMIN_ACCOUNTS = loadStored(STORAGE_KEYS.admins, [{email:'gcadmin@gmail.com', password:ADMIN_PASSWORD, name:'GCADMIN'}]);
 const PIX_KEY = '+5549999625713';
-const API_BASE = location.protocol === 'file:' ? 'http://localhost:3000/api' : '/api';
+const isLocalPreview = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+const API_BASE = location.protocol === 'file:' || (isLocalPreview && location.port !== '3000') ? '' : '/api';
+const LOCAL_USERS_KEY = 'gcLuxuryCars.users';
+const LOCAL_ADMIN_PASSWORD = 'GC.ADMIN';
+
+function getLocalUsers(){
+  const saved = localStorage.getItem(LOCAL_USERS_KEY);
+  if(!saved) return [];
+  const users = JSON.parse(saved);
+  if(!Array.isArray(users)) throw new Error('Os dados das contas salvas estão inválidos.');
+  return users;
+}
+async function hashLocalPassword(password, salt = crypto.getRandomValues(new Uint8Array(16))){
+  if(!crypto.subtle) throw new Error('Abra o site pelo Live Server do VS Code para habilitar o cadastro local.');
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+  const digest = await crypto.subtle.deriveBits({name:'PBKDF2', salt, iterations:120000, hash:'SHA-256'}, key, 256);
+  return {salt:btoa(String.fromCharCode(...salt)), passwordHash:btoa(String.fromCharCode(...new Uint8Array(digest)))};
+}
+async function verifyLocalPassword(account, password){
+  const salt = Uint8Array.from(atob(account.salt), character => character.charCodeAt(0));
+  const {passwordHash} = await hashLocalPassword(password, salt);
+  return samePasswordHash(passwordHash, account.passwordHash);
+}
+function samePasswordHash(first, second){
+  if(first.length !== second.length) return false;
+  let difference = 0;
+  for(let index = 0; index < first.length; index++) difference |= first.charCodeAt(index) ^ second.charCodeAt(index);
+  return difference === 0;
+}
+function escapeHTML(value){
+  return String(value).replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+}
 function apiHeaders(json = false){ return {...(json ? {'Content-Type':'application/json'} : {}), ...(state.apiToken ? {Authorization:`Bearer ${state.apiToken}`} : {})}; }
 
 /* ============================================================
@@ -515,9 +542,9 @@ function topbarHTML(){
     </nav>
     <div class="topbar-right">
       ${state.isAdmin
-        ? `<div class="admin-session"><span class="admin-identity"><span class="admin-icon">♛</span><span>ADMIN · ${state.user ? state.user.name.toUpperCase() : 'GCADMIN'}</span></span><button class="btn small danger" onclick="logoutAdmin()">Sair</button></div>`
+        ? `<div class="admin-session"><span class="admin-identity"><span class="admin-icon">♛</span><span>ADMIN · ${state.user ? escapeHTML(state.user.name.toUpperCase()) : 'GCADMIN'}</span></span><button class="btn small danger" onclick="logoutAdmin()">Sair</button></div>`
         : state.user
-          ? `<button class="btn small" onclick="setTab('account')">Minha conta</button><span class="plate badge-login">🔓 ${state.user.name.toUpperCase()}</span><button class="btn small" onclick="logout()">Sair</button>`
+          ? `<button class="btn small" onclick="setTab('account')">Minha conta</button><span class="plate badge-login">🔓 ${escapeHTML(state.user.name)}</span><button class="btn small" onclick="logout()">Sair</button>`
           : `<button class="btn small" onclick="openModal('login')">Entrar</button><button class="btn small gold" onclick="openModal('signup')">Cadastrar</button>`}
     </div>
   </div>`;
@@ -844,7 +871,7 @@ function loginModalHTML(){
     <div class="form-row"><label>E-mail</label><input id="login-email" placeholder="voce@email.com"></div>
     <div class="form-row"><label>Senha</label><input id="login-pass" type="password" placeholder="••••••••"></div>
     <button class="btn gold" style="width:100%" onclick="doLogin()">Entrar</button>
-    <div class="note">Autenticação simulada nesta demonstração (sessão local do navegador). Em produção, as senhas seriam validadas com hash (bcrypt) em um backend seguro.</div>
+    <div class="note">Entre com o e-mail e a senha usados no cadastro.</div>
   </div>`;
 }
 function signupModalHTML(){
@@ -861,9 +888,9 @@ function signupModalHTML(){
         <option value="admin">Administrador</option>
       </select>
     </div>
-    <div class="form-row" id="signup-admin-row" style="display:none"><label>Confirmação do administrador principal</label><input id="signup-admin-pass" type="password" placeholder="Senha de confirmação"></div>
+    <div class="form-row" id="signup-admin-row" style="display:none"><label>Senha do administrador principal</label><input id="signup-admin-pass" type="password" placeholder="Senha de confirmação"></div>
     <button class="btn gold" style="width:100%" onclick="doSignup()">Cadastrar</button>
-    <div class="note">A senha da nova conta pode ser escolhida livremente. Para liberar o perfil de administrador, é necessária a confirmação do administrador principal.</div>
+    <div class="note">${API_BASE ? 'A conta será criada com segurança no sistema. Para liberar o perfil de administrador, é necessária a senha do administrador principal.' : 'A conta fica salva neste navegador. Para criar um administrador no modo local, informe a senha principal padrão: GC.ADMIN. Esse acesso é apenas demonstrativo, pois não há servidor protegendo a senha.'}</div>
   </div>`;
 }
 
@@ -1103,30 +1130,34 @@ function renderQR(car){
 }
 
 async function doLogin(){
-  const email = document.getElementById('login-email').value || 'cliente@email.com';
+  const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-pass').value;
   if(!email.includes('@') || !password){ toast('Informe um e-mail e uma senha válidos.'); return; }
-  if(API_BASE){
-    const response = await fetch(`${API_BASE}/auth/login`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, password})});
-    if(response.ok){
-      const account = await response.json();
-      state.user = {name:account.name, email:account.email}; state.apiUserId = account.id; state.apiToken = account.token; state.isAdmin = account.role === 'admin';
-      state.currentTab = state.isAdmin ? 'admin' : 'home'; toast(state.isAdmin ? 'Login administrativo realizado.' : 'Login realizado com sucesso.'); closeModal(); return;
+  try{
+    let account;
+    if(API_BASE){
+      const response = await fetch(`${API_BASE}/auth/login`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, password})});
+      const result = await response.json();
+      if(!response.ok){ toast(result.error || 'E-mail ou senha inválidos.'); return; }
+      account = result;
+      state.apiUserId = result.id;
+      state.apiToken = result.token;
+      state.isAdmin = result.role === 'admin';
+    }else{
+      const savedAccount = getLocalUsers().find(user => user.email === email.toLowerCase());
+      if(!savedAccount){ toast('E-mail ou senha inválidos.'); return; }
+      if(!await verifyLocalPassword(savedAccount, password)){ toast('E-mail ou senha inválidos.'); return; }
+      account = savedAccount;
+      state.isAdmin = account.role === 'admin';
     }
-    toast('E-mail ou senha inválidos.'); return;
-  }
-  const admin = ADMIN_ACCOUNTS.find(account => account.email === email && account.password === password);
-  if(admin){
-    state.user = {name: admin.name, email: admin.email};
-    state.isAdmin = true;
-    state.currentTab = 'admin';
-    toast('Login administrativo realizado.');
+    state.user = {name:account.name, email:account.email};
+    state.currentTab = state.isAdmin ? 'admin' : 'home';
+    toast(state.isAdmin ? 'Login administrativo realizado.' : 'Login realizado com sucesso.');
     closeModal();
-    return;
+  }catch(error){
+    console.error('Falha ao conectar ao servidor de autenticação:', error);
+    toast(error.message || 'Não foi possível entrar na conta.');
   }
-  state.user = {name: email.split('@')[0], email};
-  toast('Login realizado com sucesso.');
-  closeModal();
 }
 async function doSignup(){
   const name = document.getElementById('signup-name').value.trim();
@@ -1134,57 +1165,70 @@ async function doSignup(){
   const password = document.getElementById('signup-pass').value;
   const role = document.getElementById('signup-role').value;
   if(!name || !email.includes('@') || password.length < 6){ toast('Preencha nome, e-mail válido e senha com pelo menos 6 caracteres.'); return; }
-  if(role === 'admin' && document.getElementById('signup-admin-pass').value !== ADMIN_PASSWORD){
-    toast('Confirmação do admin principal incorreta.');
+  const adminConfirmation = role === 'admin' ? document.getElementById('signup-admin-pass').value : '';
+  if(role === 'admin' && !API_BASE && adminConfirmation !== LOCAL_ADMIN_PASSWORD){
+    toast('Senha do administrador principal incorreta.');
     return;
   }
-  if(ADMIN_ACCOUNTS.some(account => account.email === email)){ toast('Este e-mail já está cadastrado.'); return; }
-  if(API_BASE){
-    const response = await fetch(`${API_BASE}/auth/register`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name, email, password, role, adminConfirmation:document.getElementById('signup-admin-pass').value})});
-    if(!response.ok){ toast((await response.json()).error || 'Não foi possível criar a conta.'); return; }
-    const account = await response.json();
-    state.user = {name:account.name, email:account.email}; state.apiUserId = account.id; state.apiToken = account.token; state.isAdmin = account.role === 'admin'; state.currentTab = state.isAdmin ? 'admin' : 'home';
-    toast(state.isAdmin ? 'Cadastro administrativo realizado.' : 'Cadastro realizado com sucesso. Bem-vindo(a)!'); closeModal(); return;
+  try{
+    let result;
+    if(API_BASE){
+      const response = await fetch(`${API_BASE}/auth/register`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name, email, password, role, adminConfirmation})});
+      result = await response.json();
+      if(!response.ok){ toast(result.error || 'Não foi possível criar a conta.'); return; }
+    }else{
+      const normalizedEmail = email.toLowerCase();
+      const users = getLocalUsers();
+      if(users.some(user => user.email === normalizedEmail)){ toast('Este e-mail já está cadastrado.'); return; }
+      const {salt, passwordHash} = await hashLocalPassword(password);
+      result = {name, email:normalizedEmail, salt, passwordHash, role};
+      localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify([...users, result]));
+    }
+    modalType = 'login';
+    render();
+    document.getElementById('login-email').value = result.email;
+    toast('Conta criada. Entre com seu e-mail e senha.');
+  }catch(error){
+    console.error('Falha ao conectar ao servidor de cadastro:', error);
+    toast(error.message || 'Não foi possível salvar a conta neste navegador.');
   }
-  if(role === 'admin') ADMIN_ACCOUNTS.push({email, password, name});
-  persistData();
-  state.user = {name, email};
-  state.isAdmin = role === 'admin';
-  if(state.isAdmin) state.currentTab = 'admin';
-  toast(state.isAdmin ? 'Cadastro administrativo realizado.' : 'Cadastro realizado com sucesso. Bem-vindo(a)!');
-  closeModal();
 }
 function toggleSignupAdmin(){
   const role = document.getElementById('signup-role').value;
-  document.getElementById('signup-admin-row').style.display = role === 'admin' ? 'block' : 'none';
+  const adminRow = document.getElementById('signup-admin-row');
+  if(adminRow) adminRow.style.display = role === 'admin' ? 'block' : 'none';
 }
-function logout(){ state.user=null; render(); }
+function logout(){ state.user=null; state.apiUserId=null; state.apiToken=null; state.isAdmin=false; render(); }
 
 async function doAdminLogin(){
   const email = document.getElementById('admin-email')?.value || 'admin@gcluxurycars.com';
   const pass = document.getElementById('admin-pass').value;
-  if(API_BASE){
+  try{
+    if(!API_BASE){
+      const account = getLocalUsers().find(user => user.email === email.trim().toLowerCase() && user.role === 'admin');
+      if(!account || !await verifyLocalPassword(account, pass)){ toast('E-mail ou senha de administrador inválidos.'); return; }
+      state.isAdmin = true;
+      state.user = {name:account.name, email:account.email};
+      state.currentTab = 'admin';
+      closeModal();
+      toast('Acesso administrativo liberado.');
+      return;
+    }
     const response = await fetch(`${API_BASE}/auth/login`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, password:pass})});
-    if(!response.ok){ toast('E-mail ou senha inválidos.'); return; }
-    const account = await response.json();
-    if(account.role !== 'admin'){ toast('Esta conta não possui acesso administrativo.'); return; }
-    state.isAdmin = true; state.apiUserId = account.id; state.apiToken = account.token; state.user = {name:account.name, email:account.email}; state.currentTab = 'admin'; closeModal(); toast('Acesso administrativo liberado.'); return;
-  }
-  const account = ADMIN_ACCOUNTS.find(admin => admin.email === email && admin.password === pass);
-  if(account){
-    state.isAdmin = true;
-    state.user = {name: account.name, email: account.email};
-    state.currentTab = 'admin';
-    closeModal();
-    toast('Acesso administrativo liberado.');
-  } else {
-    toast('Senha incorreta.');
+    const result = await response.json();
+    if(!response.ok){ toast(result.error || 'E-mail ou senha inválidos.'); return; }
+    if(result.role !== 'admin'){ toast('Esta conta não possui acesso administrativo.'); return; }
+    state.isAdmin = true; state.apiUserId = result.id; state.apiToken = result.token; state.user = {name:result.name, email:result.email}; state.currentTab = 'admin'; closeModal(); toast('Acesso administrativo liberado.');
+  }catch(error){
+    console.error('Falha ao conectar ao servidor de autenticação:', error);
+    toast('Não foi possível conectar ao servidor. Tente novamente.');
   }
 }
 function logoutAdmin(){
   state.isAdmin = false;
   state.user = null;
   state.apiUserId = null;
+  state.apiToken = null;
   if(state.currentTab==='admin') state.currentTab = 'home';
   render();
 }
